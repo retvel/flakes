@@ -5,7 +5,7 @@ No Rust compilation is performed. Supported systems: `aarch64-darwin`,
 `aarch64-linux`, and `x86_64-linux`.
 
 ```nix
-inputs.nh.url = "github:retved/flakes";
+inputs.nh.url = "github:retvel/flakes";
 environment.systemPackages = [ inputs.nh.packages.${system}.nh ];
 ```
 

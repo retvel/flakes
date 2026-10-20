@@ -54,7 +54,7 @@ in {
     package = mkOption {
       type = types.package;
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.rayfish;
-      defaultText = literalExpression "retpel.packages.\${pkgs.stdenv.hostPlatform.system}.rayfish";
+      defaultText = literalExpression "retvel.packages.\${pkgs.stdenv.hostPlatform.system}.rayfish";
       description = "Rayfish package to run.";
     };
     resolver.enable = mkOption {

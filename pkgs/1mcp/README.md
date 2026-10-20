@@ -16,14 +16,14 @@ libstdc++) so it runs on NixOS; the embedded app survives the patch. It is
 never stripped.
 
 The attribute name starts with a digit, so quote it:
-`inputs.retpel.packages.${system}."1mcp"`, `pkgs.retpel."1mcp"`,
-`services."1mcp"`. `nix run github:retpel/flakes#1mcp` needs no quotes.
+`inputs.retvel.packages.${system}."1mcp"`, `pkgs.retvel."1mcp"`,
+`services."1mcp"`. `nix run github:retvel/flakes#1mcp` needs no quotes.
 
 ## Usage (NixOS)
 
 ```nix
 {
-  imports = [ inputs.retpel.nixosModules."1mcp" ];
+  imports = [ inputs.retvel.nixosModules."1mcp" ];
 
   services."1mcp" = {
     enable = true;
@@ -51,10 +51,10 @@ The attribute name starts with a digit, so quote it:
 ## Updates
 
 `update.sh` checks the latest upstream release and rewrites `hashes.json`.
-Consumers pick it up with `nix flake update retpel`.
+Consumers pick it up with `nix flake update retvel`.
 
 ## Outputs
 
 - `packages.<system>."1mcp"`
-- `pkgs.retpel."1mcp"` through `overlays.default`
+- `pkgs.retvel."1mcp"` through `overlays.default`
 - `nixosModules."1mcp"`

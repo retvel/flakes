@@ -10,7 +10,7 @@ in {
     package = mkOption {
       type = types.package;
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.littlesnitch;
-      defaultText = literalExpression "retpel.packages.\${pkgs.stdenv.hostPlatform.system}.littlesnitch";
+      defaultText = literalExpression "retvel.packages.\${pkgs.stdenv.hostPlatform.system}.littlesnitch";
       description = "Little Snitch package to run.";
     };
   };

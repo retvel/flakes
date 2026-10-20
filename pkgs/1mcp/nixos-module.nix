@@ -11,7 +11,7 @@ in {
     package = mkOption {
       type = types.package;
       default = self.packages.${pkgs.stdenv.hostPlatform.system}."1mcp";
-      defaultText = literalExpression ''retpel.packages.''${pkgs.stdenv.hostPlatform.system}."1mcp"'';
+      defaultText = literalExpression ''retvel.packages.''${pkgs.stdenv.hostPlatform.system}."1mcp"'';
       description = "1MCP package to run.";
     };
     user = mkOption {

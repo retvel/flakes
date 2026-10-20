@@ -2,7 +2,7 @@
 
 Guidance for coding agents working in this repo. `README.md` is the user-facing
 doc; keep it and each package's README in sync with behavior. Remote:
-`retpel/flakes`.
+`retvel/flakes`.
 
 ## Layout
 

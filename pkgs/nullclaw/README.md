@@ -22,21 +22,21 @@ without patching. Both packages install `bin/nullclaw`; install one of them.
 
 ```nix
 {
-  inputs.retpel.url = "github:retpel/flakes";
-  inputs.retpel.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.retvel.url = "github:retvel/flakes";
+  inputs.retvel.inputs.nixpkgs.follows = "nixpkgs";
 
-  environment.systemPackages = [ inputs.retpel.packages.${system}.nullclaw ];
-  # or: inputs.retpel.packages.${system}.nullclaw-nightly
+  environment.systemPackages = [ inputs.retvel.packages.${system}.nullclaw ];
+  # or: inputs.retvel.packages.${system}.nullclaw-nightly
 }
 ```
 
-Through the overlay: `pkgs.retpel.nullclaw`, `pkgs.retpel.nullclaw-nightly`.
+Through the overlay: `pkgs.retvel.nullclaw`, `pkgs.retvel.nullclaw-nightly`.
 
 Or run it without installing:
 
 ```sh
-nix run github:retpel/flakes#nullclaw -- --version
-nix run github:retpel/flakes#nullclaw-nightly -- --version
+nix run github:retvel/flakes#nullclaw -- --version
+nix run github:retvel/flakes#nullclaw-nightly -- --version
 ```
 
 Configuration lives in `~/.nullclaw`, as upstream documents; start with
@@ -51,7 +51,7 @@ update (03:00 UTC) commits the new ones.
 
 While they are stale, a build that has to download the binary fails with a
 hash mismatch. A binary already in your Nix store keeps working. So run
-`nix flake update retpel` before rebuilding, and use `nullclaw` if you need
+`nix flake update retvel` before rebuilding, and use `nullclaw` if you need
 builds of an older lock to keep working.
 
 ## Service
@@ -64,12 +64,12 @@ exits: the same as upstream's `nullclaw service install` (`nullclaw gateway`,
 
 ```nix
 {
-  imports = [ inputs.retpel.nixosModules.nullclaw ];  # or darwinModules.nullclaw
+  imports = [ inputs.retvel.nixosModules.nullclaw ];  # or darwinModules.nullclaw
 
   services.nullclaw = {
     enable = true;
     user = "alice";
-    # package = inputs.retpel.packages.${system}.nullclaw-nightly;
+    # package = inputs.retvel.packages.${system}.nullclaw-nightly;
   };
 }
 ```
@@ -139,7 +139,7 @@ cannot change files outside `stateDir`.
 ## Updating
 
 - `nullclaw update` detects the Nix store path and only prints instructions
-  (for nixpkgs, not this flake). Upgrade with `nix flake update retpel`.
+  (for nixpkgs, not this flake). Upgrade with `nix flake update retvel`.
 - Don't use `nullclaw service install`: it writes a user service pointing at
   the current `/nix/store` path, which keeps running the old version after an
   upgrade and breaks once that path is garbage-collected. Use
@@ -155,10 +155,10 @@ Each package has an `update.sh`, run by the repo's daily workflow:
   when upstream is mid-upload.
 
 The workflow checks the flake after an update and commits to `main`.
-Consumers pick it up with `nix flake update retpel`.
+Consumers pick it up with `nix flake update retvel`.
 
 ## Outputs
 
 - `packages.<system>.nullclaw`, `packages.<system>.nullclaw-nightly`
-- `pkgs.retpel.nullclaw`, `pkgs.retpel.nullclaw-nightly` through `overlays.default`
+- `pkgs.retvel.nullclaw`, `pkgs.retvel.nullclaw-nightly` through `overlays.default`
 - `nixosModules.nullclaw`, `darwinModules.nullclaw`: the `services.nullclaw` module

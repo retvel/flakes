@@ -17,7 +17,7 @@ in {
     package = mkOption {
       type = types.package;
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.nullclaw;
-      defaultText = literalExpression "retpel.packages.\${pkgs.stdenv.hostPlatform.system}.nullclaw";
+      defaultText = literalExpression "retvel.packages.\${pkgs.stdenv.hostPlatform.system}.nullclaw";
       description = "NullClaw package to run, e.g. `nullclaw-nightly`.";
     };
     user = mkOption {

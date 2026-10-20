@@ -19,13 +19,13 @@ run on NixOS.
 
 ```nix
 {
-  inputs.retpel.url = "github:retpel/flakes";
-  inputs.retpel.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.retvel.url = "github:retvel/flakes";
+  inputs.retvel.inputs.nixpkgs.follows = "nixpkgs";
 
   # nix-darwin
   darwinConfigurations.<host> = nix-darwin.lib.darwinSystem {
     modules = [
-      inputs.retpel.darwinModules.rayfish
+      inputs.retvel.darwinModules.rayfish
       { services.rayfish.enable = true; }
     ];
   };
@@ -33,7 +33,7 @@ run on NixOS.
   # NixOS
   nixosConfigurations.<host> = nixpkgs.lib.nixosSystem {
     modules = [
-      inputs.retpel.nixosModules.rayfish
+      inputs.retvel.nixosModules.rayfish
       { services.rayfish.enable = true; }
     ];
   };
@@ -77,7 +77,7 @@ or the next boot.
 
 Everything else passes through to the real binary at `libexec/rayfish/ray`.
 
-Upgrade by updating the flake input (`nix flake update retpel`), not with
+Upgrade by updating the flake input (`nix flake update retvel`), not with
 `ray update`.
 
 If you previously ran `sudo ray up`, remove the service it installed before
@@ -90,10 +90,10 @@ since `ray uninstall` is blocked.
 repo's daily workflow runs it, builds the Linux package, runs
 `nix flake check`, and commits to `main`.
 
-Consumers still pick it up with `nix flake update retpel`.
+Consumers still pick it up with `nix flake update retvel`.
 
 ## Outputs
 
 - `packages.<system>.rayfish`
-- `pkgs.retpel.rayfish` through `overlays.default`
+- `pkgs.retvel.rayfish` through `overlays.default`
 - `darwinModules.rayfish`, `nixosModules.rayfish`

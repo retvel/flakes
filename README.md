@@ -28,27 +28,27 @@ Nix packages by `Prompter`.
 
 ```nix
 {
-  inputs.retpel.url = "github:retpel/flakes";
-  inputs.retpel.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.retvel.url = "github:retvel/flakes";
+  inputs.retvel.inputs.nixpkgs.follows = "nixpkgs";
 
   # Either take packages straight from the flake (pinned nixpkgs) ...
-  environment.systemPackages = [ inputs.retpel.packages.${system}.rayfish ];
+  environment.systemPackages = [ inputs.retvel.packages.${system}.rayfish ];
 
   # ... or build them against your own nixpkgs through the overlay.
-  nixpkgs.overlays = [ inputs.retpel.overlays.default ];
-  environment.systemPackages = [ pkgs.retpel.rayfish ];
+  nixpkgs.overlays = [ inputs.retvel.overlays.default ];
+  environment.systemPackages = [ pkgs.retvel.rayfish ];
 
   # Packages with a service module:
-  modules = [ inputs.retpel.darwinModules.rayfish ];  # or nixosModules
+  modules = [ inputs.retvel.darwinModules.rayfish ];  # or nixosModules
 }
 ```
 
-Or run one without installing: `nix run github:retpel/flakes#rayfish -- --version`.
+Or run one without installing: `nix run github:retvel/flakes#rayfish -- --version`.
 
 ## Outputs
 
 - `packages.<system>.<name>`: only packages that build on `<system>`
-- `overlays.default`: adds `pkgs.retpel.<name>`
+- `overlays.default`: adds `pkgs.retvel.<name>`
 - `darwinModules.<name>`, `nixosModules.<name>`: for packages that have a
   `module.nix` (both), `darwin-module.nix` or `nixos-module.nix` (one only)
 - `checks.<system>.<name>`: builds every package

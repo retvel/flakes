@@ -23,6 +23,7 @@ in {
     # into the store. Its AssertCapability= lines are left out: the capability
     # bounding set below is what the daemon gets. State, rules and web UI
     # overrides live in /var/lib/littlesnitch (the daemon creates it).
+    # Recheck the unit in the tarball when bumping littlesnitch.
     systemd.services.littlesnitch = {
       description = "Little Snitch network monitor daemon";
       wantedBy = [ "multi-user.target" ];

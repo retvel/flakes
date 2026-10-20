@@ -10,7 +10,7 @@ let
 
   # `sudo ray-fix`: point the Rayfish DNS (200::53) and active peer routes back at
   # the Rayfish utun, after Rayfish or another VPN (e.g. WARP) replaces a utun
-  # interface or address.
+  # interface or address. System tools by absolute path: it runs under sudo.
   rayFix = pkgs.writeShellScriptBin "ray-fix" ''
     set -eu
     [ "$(id -u)" -eq 0 ] || { echo "ray-fix: run with sudo" >&2; exit 1; }

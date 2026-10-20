@@ -1,4 +1,6 @@
 #!/bin/sh
+# bin/ray for users: blocks commands that would install or update Rayfish
+# outside Nix. Services run libexec/rayfish/ray directly. Don't loosen it.
 set -eu
 
 real='@REAL@'

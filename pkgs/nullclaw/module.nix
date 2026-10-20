@@ -161,6 +161,7 @@ in {
           # Read everything, write only stateDir. No PrivateNetwork,
           # ProtectProc=invisible or PrivateDevices: those would hide the
           # network, other processes and block devices from the agent.
+          # Recheck nullclaw/nullclaw#882 (Landlock) when bumping nullclaw.
           ProtectSystem = "strict";
           ProtectHome = "read-only";
           ReadWritePaths = [ cfg.stateDir ] ++ cfg.hardening.readWritePaths;
@@ -180,7 +181,9 @@ in {
       };
 
       # Only this run's log (by invocation ID), so the restart it triggers
-      # starts clean and cannot loop on an old warning.
+      # starts clean and cannot loop on an old warning. The string comes from
+      # upstream's src/channel_manager.zig: recheck it when bumping nullclaw.
+      # Don't match ` issue: health check failed`: it is transient.
       systemd.services.nullclaw-watchdog = mkIf cfg.watchdog.enable {
         description = "Restart NullClaw when a channel is stuck";
         serviceConfig.Type = "oneshot";

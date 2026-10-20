@@ -11,7 +11,7 @@ doc; keep it and each package's README in sync with behavior. Remote:
 | `flake.nix` | Discovers `pkgs/*/package.nix` and the module files; builds all packages in one `makeScope` so they can depend on each other by argument name; filters `packages.<system>` with `lib.meta.availableOn`. |
 | `overlays/default.nix` | `pkgs.retpel.<name>`, built against the consumer's nixpkgs. |
 | `pkgs/<name>/package.nix` | The derivation. Read `version`/hashes from `hashes.json` for prebuilt binaries. |
-| `pkgs/<name>/hashes.json` | `{ "version": ..., "hashes": { "<key>": "sha256-..." } }`, written by `update.sh`. Keys are whatever the package looks up: the system for rayfish and nullclaw. |
+| `pkgs/<name>/hashes.json` | `{ "version": ..., "hashes": { "<key>": "sha256-..." } }`, written by `update.sh`. Keys are whatever the package looks up (usually the system). |
 | `pkgs/<name>/update.sh` | Optional. Bumps `hashes.json` to the latest upstream; no-op when current. Run by `.github/workflows/update.yml`. |
 | `pkgs/<name>/module.nix` | Optional. `self: { config, ... }: { ... }`; exported as both `darwinModules.<name>` and `nixosModules.<name>`. Default package is `self.packages.${system}.<name>`. |
 | `pkgs/<name>/nixos-module.nix`, `darwin-module.nix` | Same shape as `module.nix`, exported only to `nixosModules` or `darwinModules`. |
@@ -22,45 +22,9 @@ doc; keep it and each package's README in sync with behavior. Remote:
 1. `pkgs/<name>/package.nix` (+ `hashes.json` and `update.sh` if it tracks upstream releases).
 2. Set `meta.platforms` to the systems it really supports; that's what filters `packages.<system>`.
 3. Add a row to the README package table and a `pkgs/<name>/README.md` if it has options.
+   Package-specific notes (gotchas, what to recheck on a bump) go in that README
+   or as comments in the package's own files, not in this file.
 4. `git add` new files; flakes ignore untracked files.
-
-## Package notes
-
-**nullclaw / nullclaw-nightly**: static prebuilt binaries (musl on Linux), so no
-patchelf; keep `dontFixup`. `nullclaw-nightly` is `nullclaw.override { nightly = true; }`
-with its own `pkgs/nullclaw-nightly/hashes.json`. Upstream's `nightly` release is
-rebuilt in place under the same asset names, so its pinned hashes go stale each
-day until `update.sh` runs; its `update.sh` exits 0 when the assets are mid-upload.
-`module.nix` (both platforms, like rayfish) runs `nullclaw gateway` as `user` with
-`NULLCLAW_HOME`, mirroring upstream's `service install` unit but always pointing at
-`cfg.package`. Keep `enable` off by default and `user` required. The NixOS
-`nullclaw-watchdog` timer greps the current invocation's journal for
-` issue: polling thread stale` only (string from upstream
-`src/channel_manager.zig`; `health check failed` is transient, don't restart on
-it); recheck it when bumping nullclaw.
-`hardening.enable` adds systemd confinement (read-only FS except `stateDir`,
-`NoNewPrivileges`); keep network, `/proc` and devices visible (no
-`PrivateNetwork`, `ProtectProc=invisible`, `PrivateDevices`) so a monitoring
-agent still sees the host. Recheck #882 (Landlock) when bumping nullclaw.
-
-**nullclaw-chat-ui**: static files only (`share/nullclaw-chat-ui`) unpacked from the
-upstream release archive's `build/`; never add a Node build. Upstream declares no
-license, so `meta.license` stays unset.
-
-**littlesnitch**: unfree freeware whose license allows redistribution only of
-the unmodified binary: keep `dontFixup` (no strip/patchelf; it is static musl).
-`allowedUnfree` in `flake.nix` lets this flake's own `packages` build it. Linux
-only. `nixos-module.nix` mirrors upstream's `littlesnitch.service` (sandboxing,
-capability bounding set) except `AssertCapability=`; recheck the unit in the
-tarball when bumping. `update.sh` reads the version from the
-`releases/<version>` tag on obdev/littlesnitch-linux, downloads from obdev.at.
-
-**rayfish**: see `pkgs/rayfish/README.md`. Services run `libexec/rayfish/ray`
-directly, never the guarded `bin/ray`; don't loosen `ray-guard.sh`. Detect
-nix-darwin in `module.nix` with `options ? launchd`, not `pkgs.stdenv`
-(infinite recursion). The Darwin launchd job must keep waiting for the Nix
-store before `exec`. `ray-fix` uses absolute system-tool paths because it runs
-under `sudo`.
 
 ## Checking changes
 

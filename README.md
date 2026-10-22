@@ -17,6 +17,7 @@ Nix packages by `Prompter`.
 | [1mcp](pkgs/1mcp) | Unified MCP runtime that aggregates MCP servers behind one endpoint, with a NixOS service module |
 | [nh](pkgs/nh) | Nix CLI helper from prebuilt upstream binaries, without Rust compilation |
 | [pi](pkgs/pi) | Pi coding agent from published npm packages with Node.js 24 LTS; local assembly, no Pi source compilation |
+| [nodejs-24-lts](pkgs/nodejs-24-lts) | Official prebuilt Node.js 24 LTS with independently pinned npm latest; no source compilation |
 | [littlesnitch](pkgs/littlesnitch) | Little Snitch for Linux network monitor (unfree freeware binary), with a NixOS service module |
 | [lite-xl](pkgs/lite-xl) | Lite XL editor from upstream's addons release (language plugins, colour schemes) as Lite XL.app, Apple Silicon only |
 | [nullclaw](pkgs/nullclaw) | Small, fully autonomous AI assistant in one static Zig binary, with a nix-darwin/NixOS service module |

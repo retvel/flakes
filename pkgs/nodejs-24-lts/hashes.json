@@ -1,0 +1,12 @@
+{
+  "version": "24.22.1",
+  "hashes": {
+    "aarch64-darwin": "sha256-ZUunneYVVkfiIyGTK0Xyocy3BZdswzfJuOJ4vrCFpig=",
+    "aarch64-linux": "sha256-26v3ocv5R+YFn/rSwnuABB25feoeVTtir97n8T/KM24=",
+    "x86_64-linux": "sha256-bBcqmrZxj3uAH7WnvUhq8u5eMnWAhqBLhPzOKqdwleY="
+  },
+  "npm": {
+    "version": "12.2.1",
+    "hash": "sha512-bKCmFRVT/BB+YPEYbZwQ1XUI3N5t4xKSpU1MxOjo7z3iWzKBJ0ZXRC1xFdEN+TC7N5TdywaBzf2dMXGJq/e2PQ=="
+  }
+}

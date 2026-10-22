@@ -2,7 +2,7 @@
   lib,
   stdenvNoCC,
   stdenv,
-  nodejs_24,
+  nodejs-24-lts,
   importNpmLock,
   makeWrapper,
   autoPatchelfHook,
@@ -14,7 +14,7 @@
 }:
 
 let
-  nodejs = nodejs_24;
+  nodejs = nodejs-24-lts;
   versionData = lib.importJSON ./hashes.json;
   npmRoot = ./install-lock;
   packageJson = lib.importJSON (npmRoot + "/package.json");
@@ -55,6 +55,17 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     mkdir -p "$out/lib/pi" "$out/bin"
     cp -R . "$out/lib/pi"
+    # Only retain native helpers for the host. In particular, foreign ELF
+    # helpers should not enter Darwin's output or its RPATH audit.
+    native="$out/lib/pi/node_modules/@earendil-works/pi-tui/native"
+    for platform in darwin linux win32; do
+      if [ "$platform" != "${nativePlatform}" ]; then
+        rm -rf "$native/$platform/prebuilds"
+      else
+        find "$native/$platform/prebuilds" -mindepth 1 -maxdepth 1 \
+          ! -name '${nativeTarget}' -exec rm -rf -- {} +
+      fi
+    done
     makeWrapper ${nodejs}/bin/node "$out/bin/pi" \
       --set PI_PACKAGE_DIR "$out/lib/pi/node_modules/@earendil-works/pi-coding-agent" \
       --add-flags "$out/lib/pi/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js" \

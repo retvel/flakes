@@ -1,11 +1,14 @@
 # Pi
 
 [Pi](https://pi.dev) coding agent assembled from official npm releases, using
-Node.js 24 LTS from the consumer's pinned nixpkgs. This does not compile Pi's
+the flake's `nodejs-24-lts` (official Node 24 LTS binary with independently
+pinned npm). This does not compile Pi's
 TypeScript, Bun executable, or native helpers. Nix still runs local assembly
 steps: fetch/extract packages, install dependencies without lifecycle scripts,
-and create a launcher. Node.js and system libraries must be available from a
-binary cache to avoid compiling those dependencies; check the dry run first.
+and create a launcher. Node/npm come from upstream release archives. Packaging
+tools and system libraries must be cached to avoid compiling those dependencies;
+check the dry run first. The npm assembly hook uses nixpkgs' cached Node tooling;
+the installed Pi launcher and npm use `nodejs-24-lts`.
 
 ## Use
 
@@ -20,8 +23,9 @@ Home Manager or nix-darwin, with `retvel` passed as an input:
 home.packages = [ inputs.retvel.packages.${pkgs.stdenv.hostPlatform.system}.pi ];
 ```
 
-Supported platforms: Apple Silicon macOS, Linux ARM64 and Linux x86_64. Darwin
-is tested locally; Linux builds and native-helper loading are checked by CI.
+Supported platforms: Apple Silicon macOS, Linux ARM64 and Linux x86_64. Only
+native helpers for the host are retained in the output. Darwin is tested
+locally; Linux builds and native-helper loading are checked by CI.
 The launcher includes fd/ripgrep, plus Linux clipboard tools. It appends Node
 and npm to PATH, preserving the user's preferred Node for commands run by Pi.
 It pins `PI_PACKAGE_DIR` to this installation so a parent Pi installation cannot
@@ -46,8 +50,9 @@ to source builds when upstream's versioned installer files are unavailable.
 `hashes.json` is the release version marker used by this repo's update workflow;
 actual dependency hashes live in `install-lock/package-lock.json`.
 
-Update Pi through this flake, not `pi update self`. Node's patch version follows
-the pinned nixpkgs; it is not automatically the newest patch on nodejs.org.
+Update Pi through this flake, not `pi update self`. Node and npm pins are updated
+separately by `pkgs/nodejs-24-lts/update.sh`; they no longer wait for nixpkgs to
+package the latest patch. Consumers still explicitly update their flake lock.
 
 ## Sources
 

@@ -10,8 +10,10 @@ flake at the pinned commit with `builtins.getFlake`, so the build uses
 upstream's `flake.lock` and nixpkgs, and the result does not depend on this
 repo's or the consumer's nixpkgs (the overlay gives the same store path).
 
-- Variant: `minimal` plus the dependency groups `telegram`, `cron` and `mcp`
-  (`cron` is empty upstream, since croniter is core; kept to state intent).
+- Variant: `minimal` plus the dependency groups `telegram` and `mcp`. Cron
+  needs no group: croniter is core, and the empty `cron` extra is missing
+  from `uv.lock`, so uv2nix rejects it. Only groups listed under
+  `optional-dependencies` of `hermes-agent` in `uv.lock` work.
 - `version` is set from `hashes.json`; upstream's Nix package otherwise
   reports `0.0.0`.
 - `meta.platforms` is `x86_64-linux` only, so other CI runners skip the build
@@ -65,7 +67,7 @@ On a bump, check:
 
 - `hermes --version` shows the new version, not `0.0.0` (upstream may change
   the `version` argument of `nix/hermes-agent.nix`).
-- The groups still exist in upstream's `pyproject.toml`.
+- The groups still exist in upstream's `uv.lock`.
 - Module options used on the host still exist; build the host's `toplevel`
   before updating its lock.
 

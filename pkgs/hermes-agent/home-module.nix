@@ -62,6 +62,16 @@ in
           self.packages.${pkgs.stdenv.hostPlatform.system}.hermes-agent;
     }
 
+    (lib.mkIf cfg.enable {
+      # Without a git checkout Hermes follows upstream's main branch and keeps
+      # reporting an update. Compare with the latest stable release instead.
+      home.activation.hermesAgentStableChannel = lib.hm.dag.entryAfter [ "hermesAgentSetup" ] ''
+        $DRY_RUN_CMD env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} \
+          ${(common.effectivePackage cfg).hermesVenv}/bin/python3 -I ${./stable-channel.py} \
+          ${lib.escapeShellArg "${cfg.hermesHome}/config.yaml"}
+      '';
+    })
+
     (lib.mkIf (cfg.enable && !cfg.nixManagesConfig) {
       # Upstream's activation writes the marker that turns on managed mode.
       home.activation.hermesAgentUnmanaged = lib.hm.dag.entryAfter [ "hermesAgentSetup" ] ''

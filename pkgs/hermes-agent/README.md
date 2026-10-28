@@ -90,6 +90,13 @@ What differs:
   into `config.yaml`; other keys you set with the CLI stay. `.env` is only
   touched when `environment` or `environmentFiles` is set.
 
+Hermes' update check compares with the latest stable release, like Tier 1:
+without a git checkout it would follow upstream's main branch and always
+report an update. Hermes refuses `hermes update --set-channel` on Nix, so
+each switch writes the `update.installs.<id>` record for the current store
+path to `config.yaml` (`stable-channel.py`). A new release shows as "Update
+available"; take it with `nix flake update retvel` and a rebuild.
+
 Set `services.hermes-agent.nixManagesConfig = true` for upstream's managed
 mode instead: the CLI refuses config changes, and the services see only
 Hermes, bash, coreutils, git and `extraPackages`.

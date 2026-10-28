@@ -20,10 +20,12 @@ See `LAYOUT.md`; keep it in sync when adding a kind of file or workflow.
 ## Checking changes
 
 ```sh
-nix flake check --all-systems --no-build   # evaluate everything
-nix flake check                            # build this host's packages
+nix flake check --all-systems   # evaluate everything, build this host's packages
 nix build .#<name> && ./result/bin/<prog> --version
 ```
+
+Avoid `--no-build`: its read-only store fails on filtered sources that are
+read during evaluation (`hermes-agent`).
 
 Only `aarch64-darwin` builds locally; Linux is exercised by CI. To test in the
 system config, point the input in `/etc/nix-darwin` at this checkout and run

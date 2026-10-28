@@ -66,9 +66,10 @@ package untouched.
 
 `update.sh` reads the release GitHub marks latest, resolves the annotated
 tag to its commit and writes `{ version, rev, narHash }` to `hashes.json`.
-`update.yml` then builds it on x86_64 Linux, pushes it to Cachix and commits
-`Update hermes-agent to vX.Y.Z`; a failed build drops the bump and `main`
-stays on the previous release. Run `update.sh` by hand for a manual bump.
+`update.yml` then builds it on x86_64 Linux, commits
+`Update hermes-agent to vX.Y.Z` and pushes its runtime closure to Cachix; a
+failed build drops the bump and `main` stays on the previous release. CI
+pushes no other package to the cache. Run `update.sh` by hand for a manual bump.
 
 On a bump, check:
 

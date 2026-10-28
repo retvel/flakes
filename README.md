@@ -69,6 +69,9 @@ Systems: `aarch64-darwin`, `aarch64-linux`, `x86_64-linux`.
 Linux package and commits `Update <name> to vX.Y.Z` to `main`. Run it from the
 Actions tab to update a single package.
 
+CI pushes only `hermes-agent` (its runtime closure, built on x86_64 Linux) to
+`retvel.cachix.org`; every other package builds or downloads from upstream.
+
 ## License
 
 Each packaged program keeps its own license, set by its authors. All product

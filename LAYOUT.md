@@ -10,5 +10,5 @@
 | `pkgs/<name>/module.nix` | Optional. `self: { config, ... }: { ... }`; exported as both `darwinModules.<name>` and `nixosModules.<name>`. Default package is `self.packages.${system}.<name>`. |
 | `pkgs/<name>/nixos-module.nix`, `darwin-module.nix` | Same shape as `module.nix`, exported only to `nixosModules` or `darwinModules`. |
 | `pkgs/<name>/README.md` | Optional. The package's usage, options and maintenance notes. |
-| `.github/workflows/check.yml` | `nix flake check` on Linux x86_64/aarch64 and macOS. |
-| `.github/workflows/update.yml` | Twice daily (03:17, 15:17 UTC): runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`. |
+| `.github/workflows/check.yml` | `nix flake check` on Linux x86_64/aarch64 and macOS; the x86_64 job pushes `hermes-agent` (only) to retvel.cachix.org. |
+| `.github/workflows/update.yml` | Twice daily (03:17, 15:17 UTC): runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`, then pushes `hermes-agent` to retvel.cachix.org. |

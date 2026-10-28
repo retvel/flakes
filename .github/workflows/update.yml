@@ -2,7 +2,9 @@ name: Update
 
 on:
   schedule:
-    - cron: "0 3 * * *"
+    # Twice a day, off the top of the hour, where GitHub delays or drops
+    # scheduled runs the most.
+    - cron: "17 3,15 * * *"
   workflow_dispatch:
     inputs:
       packages:

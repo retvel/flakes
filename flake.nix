@@ -21,7 +21,10 @@
 
       # Unfree packages this flake's own `packages` allow. Overlay users allow
       # them in their own nixpkgs config.
-      allowedUnfree = [ "littlesnitch" ];
+      allowedUnfree = [
+        "google-chrome"
+        "littlesnitch"
+      ];
 
       pkgsFor = eachSystem (
         system:

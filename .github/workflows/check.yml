@@ -18,14 +18,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
-      # Pull from and push to retvel.cachix.org once the token secret exists.
+      # Pull from retvel.cachix.org once the token secret exists. Nothing is
+      # pushed automatically; only hermes-agent is, by the step below.
       - uses: cachix/cachix-action@v15
         if: env.CACHIX_AUTH_TOKEN != ''
         with:
           name: retvel
           authToken: ${{ env.CACHIX_AUTH_TOKEN }}
+          skipPush: true
       # Evaluates every system and builds this runner's packages. Not
       # --no-build: its read-only store breaks filtered sources read during
       # evaluation (hermes-agent's uv.lock).
       - name: Evaluate all systems, build this runner's packages
         run: nix flake check --all-systems -L
+      # Only hermes-agent's runtime closure, for the NixOS host; paths already
+      # on cache.nixos.org are skipped.
+      - name: Push hermes-agent to Cachix
+        if: env.CACHIX_AUTH_TOKEN != '' && runner.os == 'Linux' && runner.arch == 'X64'
+        run: nix build .#hermes-agent --no-link --print-out-paths | cachix push retvel

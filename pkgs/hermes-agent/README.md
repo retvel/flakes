@@ -46,7 +46,6 @@ it from `retvel.cachix.org` instead of compiling it.
     enable = true;
     environmentFiles = [ config.sops.secrets."hermes-env".path ];
     addToSystemPackages = true;
-    settings.model.default = "anthropic/claude-sonnet-4";
     extraPackages = with pkgs; [ jq ]; # tools the agent may run
   };
 }

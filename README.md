@@ -56,7 +56,7 @@ Or run one without installing: `nix run github:retvel/flakes#rayfish -- --versio
 - `darwinModules.<name>`, `nixosModules.<name>`: for packages that have a
   `module.nix` (both), `darwin-module.nix` or `nixos-module.nix` (one only)
 - `checks.<system>.<name>`: builds every package
-- `formatter`: `nixfmt-rfc-style`
+- `formatter`: `nixfmt`
 
 Systems: `aarch64-darwin`, `aarch64-linux`, `x86_64-linux`.
 

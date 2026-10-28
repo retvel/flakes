@@ -80,9 +80,9 @@ stdenvNoCC.mkDerivation {
         "https://github.com/ghostty-org/ghostty/releases/tag/tip"
       else
         "https://ghostty.org/download";
-    changelog = lib.optionalString (!tip) "https://ghostty.org/docs/install/release-notes/${
-      lib.replaceStrings [ "." ] [ "-" ] version
-    }";
+    changelog =
+      lib.optionalString (!tip)
+        "https://ghostty.org/docs/install/release-notes/${lib.replaceStrings [ "." ] [ "-" ] version}";
     license = lib.licenses.mit;
     mainProgram = "ghostty";
     outputsToInstall = [

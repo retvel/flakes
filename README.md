@@ -20,6 +20,7 @@ Nix packages by `Prompter`.
 | [nodejs-24-lts](pkgs/nodejs-24-lts) | Official prebuilt Node.js 24 LTS with independently pinned npm latest; no source compilation |
 | [ghostty](pkgs/ghostty) | Ghostty terminal's latest release from upstream's Ghostty.dmg; macOS only, no compilation |
 | [ghostty-tip](pkgs/ghostty) | Ghostty's rolling tip build from main, bumped daily |
+| [google-chrome](pkgs/google-chrome) | Google Chrome's latest Stable release from Google's signed dmg (unfree); macOS only, no compilation |
 | [littlesnitch](pkgs/littlesnitch) | Little Snitch for Linux network monitor (unfree freeware binary), with a NixOS service module |
 | [lite-xl](pkgs/lite-xl) | Lite XL editor from upstream's addons release (language plugins, colour schemes) as Lite XL.app, Apple Silicon only |
 | [nullclaw](pkgs/nullclaw) | Small, fully autonomous AI assistant in one static Zig binary, with a nix-darwin/NixOS service module |

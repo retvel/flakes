@@ -39,7 +39,7 @@ it from `retvel.cachix.org` instead of compiling it.
 
   nix.settings = {
     extra-substituters = [ "https://retvel.cachix.org" ];
-    extra-trusted-public-keys = [ "retvel.cachix.org-1:<public key>" ];
+    extra-trusted-public-keys = [ "retvel.cachix.org-1:F90N/+Y4l6GI7+1gw86cdlu1Uc13oxJrKr/9XmbNDKc=" ];
   };
 
   services.hermes-agent = {

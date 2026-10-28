@@ -45,7 +45,7 @@ jobs:
             version="$(jq -r .version "pkgs/$name/hashes.json" 2>/dev/null || echo new)"
             # Build every x86_64-linux package, so packages built on this one
             # (e.g. nullclaw-nightly on nullclaw) are checked too.
-            if nix flake check --all-systems --no-build && nix flake check -L; then
+            if nix flake check --all-systems -L; then
               git commit -m "Update $name to v$version" -- "pkgs/$name"
             else
               echo "::error::$name failed to build after update"

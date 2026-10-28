@@ -24,7 +24,8 @@ jobs:
         with:
           name: retvel
           authToken: ${{ env.CACHIX_AUTH_TOKEN }}
-      - name: Evaluate all systems
-        run: nix flake check --all-systems --no-build
-      - name: Build packages for this runner
-        run: nix flake check -L
+      # Evaluates every system and builds this runner's packages. Not
+      # --no-build: its read-only store breaks filtered sources read during
+      # evaluation (hermes-agent's uv.lock).
+      - name: Evaluate all systems, build this runner's packages
+        run: nix flake check --all-systems -L

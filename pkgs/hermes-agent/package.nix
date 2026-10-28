@@ -8,10 +8,10 @@ let
   hermes = upstream.packages.${stdenv.hostPlatform.system}.minimal.override {
     # Upstream's Nix package defaults to "0.0.0".
     inherit (pin) version;
-    # cron is a no-op (croniter is core); kept to state intent.
+    # No "cron": croniter is core, and the empty extra is missing from
+    # uv.lock, which uv2nix rejects.
     extraDependencyGroups = [
       "telegram"
-      "cron"
       "mcp"
     ];
   };

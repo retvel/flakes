@@ -20,9 +20,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
+      # Pull from and push to retvel.cachix.org once the token secret exists.
+      - uses: cachix/cachix-action@v15
+        if: env.CACHIX_AUTH_TOKEN != ''
+        with:
+          name: retvel
+          authToken: ${{ env.CACHIX_AUTH_TOKEN }}
 
       - name: Update packages
         env:

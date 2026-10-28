@@ -51,7 +51,8 @@
         lib.meta.availableOn pkgsFor.${system}.stdenv.hostPlatform pkg && !(pkg.meta.broken or false);
 
       # Service modules, by file name in pkgs/<name>/: module.nix is exported for
-      # both nix-darwin and NixOS, darwin-module.nix / nixos-module.nix for one.
+      # both nix-darwin and NixOS, darwin-module.nix / nixos-module.nix for one,
+      # home-module.nix for Home Manager.
       modulesFrom =
         file:
         lib.genAttrs (builtins.filter (name: builtins.pathExists ./pkgs/${name}/${file}) packageNames) (
@@ -67,6 +68,7 @@
 
       darwinModules = modulesFrom "module.nix" // modulesFrom "darwin-module.nix";
       nixosModules = modulesFrom "module.nix" // modulesFrom "nixos-module.nix";
+      homeManagerModules = modulesFrom "home-module.nix";
 
       checks = self.packages;
 

@@ -27,20 +27,60 @@ repo's or the consumer's nixpkgs (the overlay gives the same store path).
 - `meta.platforms` is `x86_64-linux` only, so other CI runners skip the build
   and the Cachix cache only holds the NixOS host's closure.
 
-## Usage (NixOS)
+## Usage
 
-Use the input without `inputs.nixpkgs.follows`; Hermes is built from
-upstream's nixpkgs either way, and keeping the lock as is lets the host fetch
-it from `retvel.cachix.org` instead of compiling it.
+Two modules, both upstream's from the pinned commit with
+`services.hermes-agent.package` defaulting to this flake's package. All
+options are upstream's; see `nix/moduleCommon.nix`, `nix/homeManagerModules.nix`
+and `nix/nixosModules.nix` in the pinned source.
+
+| Module | Runs as | `HERMES_HOME` |
+|---|---|---|
+| `homeManagerModules.hermes-agent` | your user, systemd user services | `~/.hermes` (like upstream's `install.sh`) |
+| `nixosModules.hermes-agent` | system user `hermes`, hardened system service | `/var/lib/hermes/.hermes` |
+
+Either way, use the input without `inputs.nixpkgs.follows`; Hermes is built
+from upstream's nixpkgs anyway, and keeping the lock as is lets the host fetch
+it from `retvel.cachix.org` instead of compiling it. Add the cache in the
+NixOS config (a Home Manager user can't add trusted substituters):
+
+```nix
+nix.settings = {
+  extra-substituters = [ "https://retvel.cachix.org" ];
+  extra-trusted-public-keys = [ "retvel.cachix.org-1:F90N/+Y4l6GI7+1gw86cdlu1Uc13oxJrKr/9XmbNDKc=" ];
+};
+```
+
+### As your user (Home Manager)
+
+```nix
+{
+  # NixOS: systemd stops user services at logout without linger.
+  users.users.alice.linger = true;
+
+  home-manager.users.alice = {
+    imports = [ inputs.retvel.homeManagerModules.hermes-agent ];
+
+    programs.hermes-agent.enable = true; # `hermes` on PATH, HERMES_HOME exported
+    services.hermes-agent = {
+      enable = true;
+      gateway.enable = true; # Telegram
+      environmentFiles = [ "/run/secrets/hermes-env" ];
+    };
+  };
+}
+```
+
+`hermesHome` defaults to `~/.hermes` and the working directory to your home,
+so the services and `hermes` in your shell share your files and state. The
+services' PATH is only Hermes, bash, coreutils, git and `extraPackages`; add
+the tools the agent should run (gateway, cron) there.
+
+### As a system service (NixOS)
 
 ```nix
 {
   imports = [ inputs.retvel.nixosModules.hermes-agent ];
-
-  nix.settings = {
-    extra-substituters = [ "https://retvel.cachix.org" ];
-    extra-trusted-public-keys = [ "retvel.cachix.org-1:F90N/+Y4l6GI7+1gw86cdlu1Uc13oxJrKr/9XmbNDKc=" ];
-  };
 
   services.hermes-agent = {
     enable = true;
@@ -51,16 +91,12 @@ it from `retvel.cachix.org` instead of compiling it.
 }
 ```
 
-`nixosModules.hermes-agent` is upstream's `nixosModules.default` from the
-pinned commit, with `services.hermes-agent.package` defaulting to this
-flake's package. All options are upstream's; see `nix/nixosModules.nix` and
-`nix/moduleCommon.nix` in the pinned source.
+### Keep the cache hit
 
 Do not set `services.hermes-agent.extraDependencyGroups` or
-`extraPythonPackages` on the host: either changes the derivation, so the host
-builds it locally instead of using the cache. Add groups to `package.nix`
-here instead. Tools for the agent go in `extraPackages`, which leaves the
-package untouched.
+`extraPythonPackages`: either changes the derivation, so the host builds it
+locally instead of using the cache. Add groups to `package.nix` here instead.
+Tools for the agent go in `extraPackages`, which leaves the package untouched.
 
 ## Updates
 
@@ -84,3 +120,4 @@ On a bump, check:
 - `packages.x86_64-linux.hermes-agent`
 - `pkgs.retvel.hermes-agent` through `overlays.default`
 - `nixosModules.hermes-agent`
+- `homeManagerModules.hermes-agent`

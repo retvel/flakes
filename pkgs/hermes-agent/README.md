@@ -13,7 +13,15 @@ repo's or the consumer's nixpkgs (the overlay gives the same store path).
 - Variant: `minimal` plus the dependency groups `telegram` and `mcp`. Cron
   needs no group: croniter is core, and the empty `cron` extra is missing
   from `uv.lock`, so uv2nix rejects it. Only groups listed under
-  `optional-dependencies` of `hermes-agent` in `uv.lock` work.
+  `optional-dependencies` of `hermes-agent` in `uv.lock` work. Upstream
+  always adds the `all` extra (cron, pty, mcp, uvloop, sms, acp, google, web,
+  youtube), so `mcp` is already in it; it is listed to keep it if `all`
+  changes.
+- Python dependencies come from upstream's `uv.lock`, so their versions are
+  exactly what the Tier 1 install gets. llm-agents.nix's `hermes-agent`
+  instead uses nixpkgs' Python packages with a few overrides and ships every
+  messaging extra (Discord, Slack, Matrix, ...); this package has Telegram
+  only.
 - `version` is set from `hashes.json`; upstream's Nix package otherwise
   reports `0.0.0`.
 - `meta.platforms` is `x86_64-linux` only, so other CI runners skip the build

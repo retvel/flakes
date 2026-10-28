@@ -5,8 +5,9 @@ cd "$(dirname "$0")"
 
 repo=NousResearch/hermes-agent
 # The release marked latest is never a draft or prerelease (no canary/rc).
+# Short major only: older calendar tags (v2026.9.24) are not this scheme.
 latest="$(gh release view -R "$repo" --json tagName -q .tagName)"
-[[ $latest =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "hermes-agent: unexpected tag $latest" >&2; exit 1; }
+[[ $latest =~ ^v[0-9]{1,3}\.[0-9]+\.[0-9]+$ ]] || { echo "hermes-agent: unexpected tag $latest" >&2; exit 1; }
 version="${latest#v}"
 current="$(jq -r .version hashes.json)"
 [ "$version" != "$current" ] || { echo "hermes-agent: $current is latest"; exit 0; }

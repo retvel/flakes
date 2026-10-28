@@ -4,10 +4,11 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 repo=NousResearch/hermes-agent
-# The release marked latest is never a draft or prerelease (no canary/rc).
-# Short major only: older calendar tags (v2026.9.24) are not this scheme.
+# Same rule as Tier 1's stable channel: the release GitHub marks latest
+# (never a draft or prerelease), checked against STABLE_TAG_RE from
+# hermes_cli/update_channel.py, which also rejects calendar tags (v2026.9.24).
 latest="$(gh release view -R "$repo" --json tagName -q .tagName)"
-[[ $latest =~ ^v[0-9]{1,3}\.[0-9]+\.[0-9]+$ ]] || { echo "hermes-agent: unexpected tag $latest" >&2; exit 1; }
+[[ $latest =~ ^v(0|[1-9][0-9]{0,2})\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || { echo "hermes-agent: unexpected tag $latest" >&2; exit 1; }
 version="${latest#v}"
 current="$(jq -r .version hashes.json)"
 [ "$version" != "$current" ] || { echo "hermes-agent: $current is latest"; exit 0; }

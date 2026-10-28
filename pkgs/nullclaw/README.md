@@ -46,8 +46,8 @@ Configuration lives in `~/.nullclaw`, as upstream documents; start with
 
 Upstream rebuilds the `nightly` release in place: every day it replaces the
 assets under the same file names. The pinned hashes therefore go stale as soon
-as upstream publishes (its build starts at 02:23 UTC) and stay stale until this repo's daily
-update (03:00 UTC) commits the new ones.
+as upstream publishes (its build starts at 02:23 UTC) and stay stale until this repo's next
+update (03:17 or 15:17 UTC) commits the new ones.
 
 While they are stale, a build that has to download the binary fails with a
 hash mismatch. A binary already in your Nix store keeps working. So run

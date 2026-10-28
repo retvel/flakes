@@ -11,4 +11,4 @@
 | `pkgs/<name>/nixos-module.nix`, `darwin-module.nix` | Same shape as `module.nix`, exported only to `nixosModules` or `darwinModules`. |
 | `pkgs/<name>/README.md` | Optional. The package's usage, options and maintenance notes. |
 | `.github/workflows/check.yml` | `nix flake check` on Linux x86_64/aarch64 and macOS. |
-| `.github/workflows/update.yml` | Daily: runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`. |
+| `.github/workflows/update.yml` | Twice daily (03:17, 15:17 UTC): runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`. |

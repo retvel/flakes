@@ -62,10 +62,10 @@ Systems: `aarch64-darwin`, `aarch64-linux`, `x86_64-linux`.
 
 ## Updates
 
-`.github/workflows/update.yml` runs daily. For each `pkgs/<name>/update.sh`, it
-runs the script. If files changed, it builds every Linux package and commits
-`Update <name> to vX.Y.Z` to `main`. Run it from the Actions tab to update a
-single package.
+`.github/workflows/update.yml` runs twice a day (03:17 and 15:17 UTC). For each
+`pkgs/<name>/update.sh`, it runs the script. If files changed, it builds every
+Linux package and commits `Update <name> to vX.Y.Z` to `main`. Run it from the
+Actions tab to update a single package.
 
 ## License
 

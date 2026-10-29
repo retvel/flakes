@@ -40,8 +40,12 @@ stdenvNoCC.mkDerivation {
 
   installPhase = ''
     runHook preInstall
+    # An HFS+ dmg unpacks into a folder named after its volume, an APFS one
+    # into the current directory.
+    app="$(find . -maxdepth 2 -type d -name ${lib.escapeShellArg "${config.name}.app"} | head -n1)"
+    [ -n "$app" ] || { echo "no ${config.name}.app in the dmg" >&2; exit 1; }
     mkdir -p "$out/Applications"
-    cp -R ${lib.escapeShellArg config.name}.app "$out/Applications/"
+    cp -R "$app" "$out/Applications/"
     runHook postInstall
   '';
 

@@ -1,7 +1,8 @@
 {
   "version": "3.17.8",
-  "tag": "webapp-discord-v3.17.8-b54cb727",
+  "tag": "pake-v3.17.8",
+  "asset": "Discord-b54cb727-aarch64.dmg",
   "hashes": {
-    "aarch64-darwin": "sha256-wrzrGAK2kk4h4v/YPCwc0tv4P3D/DQ7hOcjTOOAKRbU="
+    "aarch64-darwin": "sha256-o1uBm0BwG4vOjYiZmqw2r3yQIKzKBNwzpdgwU97mA3M="
   }
 }

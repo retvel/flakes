@@ -1,8 +1,8 @@
 {
   "version": "3.17.8",
   "tag": "pake-v3.17.8",
-  "config": "f168ae98",
+  "config": "645643bb",
   "hashes": {
-    "aarch64-darwin": "sha256-jX0qrdJwAmfvulFRz9q8XlURbv4nxYwkmtGycxvrI14="
+    "aarch64-darwin": "sha256-jlCiaooozVtYyosrEdCWx/Fz62qi1p5PU8qXjPIrfFs="
   }
 }

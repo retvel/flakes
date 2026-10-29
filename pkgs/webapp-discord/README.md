@@ -21,6 +21,6 @@ Until the first release is pinned, `hashes.json` is empty and the package is
 not in `packages`.
 
 `icon.png` is Discord's white Symbol.svg from discord.com/branding on Blurple
-(#5865F2), 512x512. `camera` and `microphone` let voice and video calls ask for
+(#5865F2), 512x512, stamped "WEBAPP" in Black Ops One (OFL). `camera` and `microphone` let voice and video calls ask for
 access. Desktop-client features (overlay, Krisp noise suppression, game
 activity) are not available.

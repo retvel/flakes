@@ -32,6 +32,7 @@ Nix packages by `Prompter`.
 | [rayfish](pkgs/rayfish) | P2P mesh VPN (iroh), with a nix-darwin/NixOS service module |
 | [utm](pkgs/utm) | UTM virtual machine host for macOS from the upstream release dmg, no compilation |
 | [webapp-claude](pkgs/webapp-claude) | claude.ai as a desktop app, built from Pake's release source with Tauri (compiles Rust) |
+| [webapp-discord](pkgs/webapp-discord) | Discord's web client as a desktop app, built the same way |
 
 ## Usage
 

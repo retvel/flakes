@@ -23,6 +23,9 @@ on:
 permissions:
   contents: write
 
+# Runs queue one at a time. Each job checks out the newest main rather than the
+# commit that triggered it, so a queued run sees the pins an earlier one pushed
+# and its own pin commits apply without conflicts.
 concurrency:
   group: webapp
   cancel-in-progress: false
@@ -38,6 +41,8 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - id: plan
         run: |
           pake="$(npm view pake-cli version)"
@@ -78,6 +83,8 @@ jobs:
       ASSET: ${{ matrix.asset }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -103,6 +110,8 @@ jobs:
       WEBAPPS: ${{ needs.plan.outputs.webapps }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: cachix/install-nix-action@v31
       - name: Pin published releases
         run: |

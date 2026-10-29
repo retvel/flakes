@@ -11,7 +11,7 @@
 {
   pname,
   # The webapp's directory: pake.json (Pake's --config) and hashes.json
-  # ({ version, tag, asset, hashes }, written by the workflow once the dmg is
+  # ({ version, tag, config, hashes }, written by the workflow once the dmg is
   # published).
   dir,
   description,
@@ -26,7 +26,8 @@ stdenvNoCC.mkDerivation {
   inherit (sources) version;
 
   src = fetchurl {
-    # Pins from before the shared "Pake (X.Y.Z)" release have no `asset`.
+    # The dmg is <App>-aarch64.dmg; pins written while its name carried a
+    # config hash record that name as `asset`.
     url = "https://github.com/retvel/flakes/releases/download/${sources.tag}/${
       sources.asset or "${config.name}-aarch64.dmg"
     }";

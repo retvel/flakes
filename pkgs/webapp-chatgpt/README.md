@@ -20,7 +20,9 @@ for new pake-cli releases and on any change to `pake.json` or `icon.png`.
 Until the first release is pinned, `hashes.json` is empty and the package is
 not in `packages`.
 
-`icon.png` is the black knot from Pake's own `chatgpt_512.png` on white,
-512x512, stamped "WEBAPP" in Black Ops One (OFL) with a white edge so it reads
-over the black mark. Google, Apple and Microsoft sign-in may be blocked inside
-the embedded WebView; email sign-in works.
+`icon.png` is ChatGPT's own `apple-touch-icon` from cdn.oaistatic.com,
+unchanged apart from a white "W" with a black outline (JetBrains Mono, OFL) in
+the middle.
+
+Google, Apple and Microsoft sign-in may be blocked inside the embedded
+WebView; email sign-in works.

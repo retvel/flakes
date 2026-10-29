@@ -91,14 +91,14 @@ What differs:
 
 - Updates come from Nix (`nix flake update retvel` and a rebuild), not
   `hermes update`; the services restart on the new version after the switch.
-- The unit is `hermes-agent`, not `hermes-gateway`, so `hermes gateway
-  status` reports "Running manually"; use `systemctl --user` instead. Under
-  the name `hermes-gateway`, `hermes gateway start` and `restart` would find
-  the unit different from the one they generate and try to rewrite it in
-  the read-only store.
-- `hermes gateway status` warns "install out of sync" for node, npm,
-  ripgrep and ffmpeg: Hermes looks for its pm-pinned copies, while the Nix
-  package brings its own on the PATH.
+- With `gateway.enable` the unit is `hermes-agent`, which Hermes' CLI does
+  not know: `hermes gateway status` reports "Running manually". Use
+  `hermesGatewayUnit` (below) for the Tier 1 unit.
+- Once Hermes downloads a tool into `~/.hermes/tools` (the browser tool
+  fetches agent-browser on first use when none is on PATH), `hermes gateway
+  status` warns "install out of sync" for node, npm, ripgrep and ffmpeg,
+  which it then expects there too. Put `pkgs.agent-browser` in
+  `home.packages` to avoid it.
 - Each switch merges `settings` (and `terminal.cwd` from `workingDirectory`)
   into `config.yaml`; other keys you set with the CLI stay. `.env` is only
   touched when `environment` or `environmentFiles` is set.
@@ -113,6 +113,37 @@ available"; take it with `nix flake update retvel` and a rebuild.
 Set `services.hermes-agent.nixManagesConfig = true` for upstream's managed
 mode instead: the CLI refuses config changes, and the services see only
 Hermes, bash, coreutils, git and `extraPackages`.
+
+#### The Tier 1 gateway unit (Linux)
+
+```nix
+services.hermes-agent = {
+  gateway.enable = false;
+  hermesGatewayUnit.enable = true;
+  # Optional, not for secrets (the drop-in is in the store):
+  hermesGatewayUnit.environment.AGENT_BROWSER_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
+};
+```
+
+The gateway then runs as Hermes' own user unit `hermes-gateway`, the one
+`hermes gateway install` writes after install.sh, so `hermes gateway
+status`, `start`, `stop`, `restart` and `uninstall` manage it. That unit is
+Hermes' file in `~/.config/systemd/user`, not a store link: Hermes compares it
+with what it would generate and rewrites it when they differ.
+
+- Hermes' unit starts the store's Python without the package's wrapper (no
+  bundled skills, locales or node, only FHS dirs on PATH). The drop-in
+  `hermes-gateway.service.d/10-nix.conf` replaces `ExecStart` with
+  `<package>/bin/hermes gateway run` and sets `PATH`, `HERMES_MANAGED=false`
+  and `hermesGatewayUnit.environment`.
+- Each switch, after the user units are reloaded: `hermes gateway install
+  --start-now --start-on-login` if the unit is missing, otherwise `hermes
+  gateway restart` when the package or the drop-in changed (it refreshes the
+  unit's store paths first). A stopped gateway stays stopped; its unit is
+  refreshed on the next `hermes gateway start`. `~/.hermes/.nix-gateway-unit`
+  links to the drop-in last applied.
+- Needs `nixManagesConfig = false`: managed mode refuses `hermes gateway
+  install`.
 
 ### As a system service (NixOS)
 

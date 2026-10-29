@@ -44,6 +44,32 @@ let
     module:
     "${(common.effectivePackage cfg).hermesVenv}/bin/python3 -I -c "
     + "'import hermes_bootstrap, runpy; runpy.run_module(\"${module}\", run_name=\"__main__\", alter_sys=True)'";
+
+  hermes = "${common.effectivePackage cfg}/bin/hermes";
+  unitCfg = cfg.hermesGatewayUnit;
+  unitDir = "${config.xdg.configHome}/systemd/user";
+
+  # Hermes' own unit starts the store's Python directly, without the
+  # package's wrapper: no bundled skills, locales or node, and only FHS dirs
+  # on PATH. The drop-in runs the wrapper instead, which Hermes still
+  # recognizes as its gateway (`hermes gateway run`).
+  gatewayDropIn = pkgs.writeText "hermes-gateway-nix.conf" (
+    lib.concatStringsSep "\n" (
+      [
+        "[Service]"
+        "ExecStart="
+        "ExecStart=${hermes} gateway run"
+      ]
+      ++ lib.mapAttrsToList (k: v: "Environment=\"${k}=${v}\"") (
+        {
+          HERMES_MANAGED = "false";
+          PATH = userPath;
+        }
+        // unitCfg.environment
+      )
+    )
+    + "\n"
+  );
 in
 {
   imports = [ upstream.homeManagerModules.default ];
@@ -60,6 +86,24 @@ in
       true: upstream's managed mode. The CLI refuses config changes, and the
       services see only Hermes, bash, coreutils, git and `extraPackages`.
     '';
+  };
+
+  options.services.hermes-agent.hermesGatewayUnit = {
+    enable = lib.mkEnableOption ''
+      the gateway as Hermes' own user unit `hermes-gateway`, the one
+      `hermes gateway install` writes on Tier 1, in place of `gateway.enable`.
+      `hermes gateway status`, `start`, `stop` and `restart` then manage it.
+      Each switch installs it if missing, and otherwise runs
+      `hermes gateway restart` when the package or the drop-in changed, which
+      points the unit at the new store paths. A drop-in runs the package's
+      wrapper and sets PATH (Linux only)
+    '';
+
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = "Variables for the gateway, set in the drop-in. Not for secrets: the drop-in is in the Nix store.";
+    };
   };
 
   config = lib.mkMerge [
@@ -102,6 +146,54 @@ in
           TimeoutStopSec = 70;
         };
       };
+    })
+
+    (lib.mkIf (cfg.enable && unitCfg.enable) {
+      assertions = [
+        {
+          assertion = !cfg.gateway.enable;
+          message = "services.hermes-agent: set gateway.enable = false with hermesGatewayUnit.enable; both would poll the same bot token.";
+        }
+        {
+          assertion = !cfg.nixManagesConfig;
+          message = "services.hermes-agent.hermesGatewayUnit needs nixManagesConfig = false; managed mode refuses `hermes gateway install`.";
+        }
+        {
+          assertion = pkgs.stdenv.hostPlatform.isLinux;
+          message = "services.hermes-agent.hermesGatewayUnit is for systemd (Linux) only.";
+        }
+      ];
+
+      xdg.configFile."systemd/user/hermes-gateway.service.d/10-nix.conf".source = gatewayDropIn;
+
+      # After reloadSystemd, so a `hermes-agent` unit this switch removes is
+      # stopped first. The stamp links to the drop-in, whose store path
+      # changes with the package. A stopped gateway stays stopped; its unit
+      # is refreshed on the next `hermes gateway start`.
+      home.activation.hermesGatewayUnit =
+        lib.hm.dag.entryAfter
+          [
+            "reloadSystemd"
+            "hermesAgentUnmanaged"
+            "hermesAgentStableChannel"
+          ]
+          ''
+            export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+            hermesGateway() {
+              $DRY_RUN_CMD env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} ${hermes} gateway "$@"
+            }
+            stamp=${lib.escapeShellArg "${cfg.hermesHome}/.nix-gateway-unit"}
+            if [ ! -e ${lib.escapeShellArg "${unitDir}/hermes-gateway.service"} ]; then
+              $DRY_RUN_CMD systemctl --user daemon-reload
+              hermesGateway install --start-now --start-on-login
+            elif [ "$(readlink "$stamp" 2>/dev/null)" != ${gatewayDropIn} ]; then
+              $DRY_RUN_CMD systemctl --user daemon-reload
+              if systemctl --user is-active --quiet hermes-gateway; then
+                hermesGateway restart
+              fi
+            fi
+            $DRY_RUN_CMD ln -sfn ${gatewayDropIn} "$stamp"
+          '';
     })
 
     (lib.mkIf (cfg.enable && !cfg.nixManagesConfig) {

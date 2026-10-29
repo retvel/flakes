@@ -26,3 +26,6 @@ the middle.
 
 Google, Apple and Microsoft sign-in may be blocked inside the embedded
 WebView; email sign-in works.
+
+`safeDomain` keeps chatgpt.com and openai.com (sign-in is on auth.openai.com)
+in the app; other links open in the default browser.

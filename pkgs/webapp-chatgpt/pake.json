@@ -7,5 +7,6 @@
   "height": 860,
   "hideTitleBar": false,
   "enableFind": true,
-  "newWindow": true
+  "newWindow": true,
+  "safeDomain": "chatgpt.com,openai.com"
 }

@@ -26,3 +26,7 @@ middle.
 
 `camera` and `microphone` let voice and video calls ask for access. Desktop-client features (overlay, Krisp noise suppression, game
 activity) are not available.
+
+`safeDomain` keeps Discord's own domains (invites on discord.gg, attachments on
+discordapp.com and discordapp.net, gifts) in the app; other links open in the
+default browser.

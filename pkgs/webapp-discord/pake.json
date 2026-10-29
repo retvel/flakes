@@ -9,5 +9,6 @@
   "enableFind": true,
   "newWindow": true,
   "camera": true,
-  "microphone": true
+  "microphone": true,
+  "safeDomain": "discord.com,discord.gg,discord.gift,discord.new,discord.media,discordapp.com,discordapp.net"
 }

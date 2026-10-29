@@ -20,5 +20,6 @@ for new pake-cli releases and on any change to `pake.json` or `icon.png`.
 Until the first release is pinned, `hashes.json` is empty and the package is
 not in `packages`.
 
-`icon.png` is claude.ai's `apple-touch-icon.png`. Sign in with email: Google
+`icon.png` is the white mark from claude.ai's `apple-touch-icon.png` on flat
+#D97757, 512x512, stamped "WEBAPP" in Black Ops One (OFL). Sign in with email: Google
 blocks sign-in inside embedded WebViews.

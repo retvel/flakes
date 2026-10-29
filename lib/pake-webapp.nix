@@ -1,6 +1,6 @@
 # A website as a macOS app, built with Pake (https://github.com/tw93/Pake) by
-# .github/workflows/webapp.yml and published as a release of this repo. Nothing
-# is compiled here: this unpacks that release's dmg. Used by
+# .github/workflows/webapp.yml and published in this repo's "Pake (X.Y.Z)"
+# release. Nothing is compiled here: this unpacks that release's dmg. Used by
 # pkgs/webapp-*/package.nix through `callPackage`.
 {
   lib,
@@ -11,7 +11,8 @@
 {
   pname,
   # The webapp's directory: pake.json (Pake's --config) and hashes.json
-  # ({ version, tag, hashes }, written by the workflow once the release exists).
+  # ({ version, tag, asset, hashes }, written by the workflow once the dmg is
+  # published).
   dir,
   description,
 }:
@@ -25,7 +26,10 @@ stdenvNoCC.mkDerivation {
   inherit (sources) version;
 
   src = fetchurl {
-    url = "https://github.com/retvel/flakes/releases/download/${sources.tag}/${config.name}-aarch64.dmg";
+    # Pins from before the shared "Pake (X.Y.Z)" release have no `asset`.
+    url = "https://github.com/retvel/flakes/releases/download/${sources.tag}/${
+      sources.asset or "${config.name}-aarch64.dmg"
+    }";
     hash = sources.hashes.${system};
   };
 

@@ -12,8 +12,9 @@ home.packages = [ inputs.retvel.packages.${system}.webapp-discord ];
 The package is `Discord.app` under `Applications/`.
 
 `pake.json` is the app's Pake config (`pake --config`). `.github/workflows/webapp.yml`
-builds it with pake-cli on a macOS runner and publishes `Discord-aarch64.dmg` as a
-release of this repo, then pins the release in `hashes.json`. It runs daily
+builds it with pake-cli on a macOS runner, adds `Discord-<config hash>-aarch64.dmg`
+to this repo's "Pake (X.Y.Z)" release (tag `pake-vX.Y.Z`), then pins it in
+`hashes.json`. It runs daily
 for new pake-cli releases and on any change to `pake.json` or `icon.png`.
 Until the first release is pinned, `hashes.json` is empty and the package is
 not in `packages`.

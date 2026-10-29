@@ -1,1 +1,7 @@
-{ "version": "", "tag": "", "hashes": {} }
+{
+  "version": "3.17.8",
+  "tag": "webapp-claude-v3.17.8-545c7c96",
+  "hashes": {
+    "aarch64-darwin": "sha256-o5h1bFcKlk+LKSaAY1whf0a/4Dbcd+RgQ206czAw6Z0="
+  }
+}

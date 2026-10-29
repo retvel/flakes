@@ -37,6 +37,13 @@ let
     "HERMES_MANAGED=false"
     "PATH=${userPath}"
   ];
+
+  # Runs one of Hermes' modules the way the unit `hermes gateway install`
+  # writes does (installation_command in hermes_cli/_launchers.py).
+  hermesModule =
+    module:
+    "${(common.effectivePackage cfg).hermesVenv}/bin/python3 -I -c "
+    + "'import hermes_bootstrap, runpy; runpy.run_module(\"${module}\", run_name=\"__main__\", alter_sys=True)'";
 in
 {
   imports = [ upstream.homeManagerModules.default ];
@@ -70,6 +77,31 @@ in
           ${(common.effectivePackage cfg).hermesVenv}/bin/python3 -I ${./stable-channel.py} \
           ${lib.escapeShellArg "${cfg.hermesHome}/config.yaml"}
       '';
+    })
+
+    # The rest of the gateway unit `hermes gateway install` writes on Tier 1
+    # (generate_systemd_unit in hermes_cli/gateway.py). Without the stop mark
+    # Hermes takes every `systemctl stop` or restart, a switch included, for
+    # an unexpected kill, exits 1 and leaves the unit failed. Exit 75 is a
+    # requested restart (`/restart`), 78 a config error a restart cannot fix.
+    # ExecStopPost kills helpers left in the cgroup. TimeoutStopSec is what
+    # Hermes computes for its default drain timeouts.
+    (lib.mkIf (cfg.enable && cfg.gateway.enable && pkgs.stdenv.hostPlatform.isLinux) {
+      systemd.user.services.hermes-agent = {
+        Unit.StartLimitIntervalSec = 0;
+        Service = {
+          Environment = [ "HERMES_SUPERVISED_CHILD=1" ];
+          RestartForceExitStatus = 75;
+          SuccessExitStatus = 75;
+          RestartPreventExitStatus = 78;
+          KillMode = "mixed";
+          KillSignal = "SIGTERM";
+          ExecReload = "${pkgs.coreutils}/bin/kill -USR1 $MAINPID";
+          ExecStop = "-${hermesModule "gateway.systemd_stop_mark"}";
+          ExecStopPost = "-${hermesModule "gateway.cgroup_cleanup"}";
+          TimeoutStopSec = 70;
+        };
+      };
     })
 
     (lib.mkIf (cfg.enable && !cfg.nixManagesConfig) {

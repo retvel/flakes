@@ -1,0 +1,122 @@
+name: Webapps
+
+# Builds every pkgs/webapp-*/ with Pake on Apple Silicon and publishes the dmg
+# as a release of this repo, then pins it in that webapp's hashes.json. A
+# release's tag names the pake-cli version and a hash of pake.json + icon.png,
+# so a new Pake release or a config change builds a new release and an
+# unchanged one builds nothing.
+
+on:
+  # Daily, off the top of the hour, to pick up new pake-cli releases.
+  schedule:
+    - cron: "41 5 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "pkgs/webapp-*/pake.json"
+      - "pkgs/webapp-*/icon.png"
+      - ".github/workflows/webapp.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: webapp
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      pake: ${{ steps.plan.outputs.pake }}
+      webapps: ${{ steps.plan.outputs.webapps }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        run: |
+          pake="$(npm view pake-cli version)"
+          webapps='[]'
+          for dir in pkgs/webapp-*/; do
+            name="$(basename "$dir")"
+            config="$(cat "$dir/pake.json" "$dir/icon.png" | sha256sum | cut -c1-8)"
+            tag="$name-v$pake-$config"
+            [ "$(jq -r .tag "$dir/hashes.json")" != "$tag" ] || continue
+            product="$(jq -r .name "$dir/pake.json")"
+            webapps="$(jq -c --arg n "$name" --arg t "$tag" --arg p "$product" \
+              '. + [{name: $n, tag: $t, product: $p}]' <<<"$webapps")"
+          done
+          echo "pake=$pake" >> "$GITHUB_OUTPUT"
+          echo "webapps=$webapps" >> "$GITHUB_OUTPUT"
+          echo "pake-cli $pake; to build: $webapps"
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.webapps != '[]'
+    # Apple Silicon.
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.webapps) }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PAKE: ${{ needs.plan.outputs.pake }}
+      NAME: ${{ matrix.name }}
+      TAG: ${{ matrix.tag }}
+      PRODUCT: ${{ matrix.product }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build and publish
+        run: |
+          # Left over from a run whose pin step failed: only the pin is missing.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG already published"
+            exit 0
+          fi
+          npm install -g "pake-cli@$PAKE"
+          cd "pkgs/$NAME"
+          pake --config pake.json --icon "$PWD/icon.png" --json > "$RUNNER_TEMP/result.json"
+          dmg="$(jq -r '.outputs[] | select(.format == "dmg") | .path' "$RUNNER_TEMP/result.json" | head -n1)"
+          [ -n "$dmg" ] || { cat "$RUNNER_TEMP/result.json"; exit 1; }
+          asset="$RUNNER_TEMP/$PRODUCT-aarch64.dmg"
+          cp "$dmg" "$asset"
+          gh release create "$TAG" "$asset" \
+            --target "$GITHUB_SHA" \
+            --title "$NAME (pake-cli $PAKE)" \
+            --notes "$PRODUCT for Apple Silicon, built from pkgs/$NAME/pake.json with pake-cli $PAKE. Installed by the $NAME package."
+
+  pin:
+    needs: [plan, build]
+    if: ${{ !cancelled() && needs.plan.outputs.webapps != '[]' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PAKE: ${{ needs.plan.outputs.pake }}
+      WEBAPPS: ${{ needs.plan.outputs.webapps }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Pin published releases
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          jq -c '.[]' <<<"$WEBAPPS" | while read -r webapp; do
+            name="$(jq -r .name <<<"$webapp")"
+            tag="$(jq -r .tag <<<"$webapp")"
+            product="$(jq -r .product <<<"$webapp")"
+            # Its build failed; leave the old pin.
+            gh release view "$tag" >/dev/null 2>&1 || { echo "::error::$tag was not published"; continue; }
+            url="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/$product-aarch64.dmg"
+            hash="$(nix store prefetch-file --json "$url" | jq -r .hash)"
+            jq -n --arg v "$PAKE" --arg t "$tag" --arg h "$hash" \
+              '{version: $v, tag: $t, hashes: {"aarch64-darwin": $h}}' > "pkgs/$name/hashes.json"
+            git commit -m "Update $name to v$PAKE" -- "pkgs/$name/hashes.json"
+          done
+          git pull --rebase
+          git push

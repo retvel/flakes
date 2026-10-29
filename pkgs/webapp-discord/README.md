@@ -1,28 +1,24 @@
 # webapp-discord
 
-Discord (https://discord.com/app) as a desktop app, built with [Pake](https://github.com/tw93/Pake)
-(Tauri + the system WebView). Supported systems: `aarch64-darwin`,
-`aarch64-linux`, and `x86_64-linux`.
+Discord (https://discord.com/app) as a macOS app, built with [Pake](https://github.com/tw93/Pake)
+(Tauri + the system WebView). Apple Silicon (`aarch64-darwin`) only; nothing
+is compiled on install.
 
 ```nix
 inputs.retvel.url = "github:retvel/flakes";
-environment.systemPackages = [ inputs.retvel.packages.${system}.webapp-discord ];
+home.packages = [ inputs.retvel.packages.${system}.webapp-discord ];
 ```
 
-The overlay also provides `pkgs.retvel.webapp-discord`. On macOS the app is
-`Discord.app` under `Applications/` in the package; on Linux, `bin/webapp-discord`
-plus a desktop entry named Discord.
+The package is `Discord.app` under `Applications/`.
 
-The build is `lib/pake-webapp.nix`: it applies `package.nix`'s settings to
-Pake's release source the way `pake <url>` would, then compiles it with
-`cargo tauri build` (several minutes, unlike most packages here). `window` in
-`package.nix` takes the field names of Pake's `src-tauri/pake.json`.
+`pake.json` is the app's Pake config (`pake --config`). `.github/workflows/webapp.yml`
+builds it with pake-cli on a macOS runner and publishes `Discord-aarch64.dmg` as a
+release of this repo, then pins the release in `hashes.json`. It runs daily
+for new pake-cli releases and on any change to `pake.json` or `icon.png`.
+Until the first release is pinned, `hashes.json` is empty and the package is
+not in `packages`.
 
-Discord's web client in the system WebView: no Discord desktop app features
-such as Krisp noise suppression, game activity or overlay. Voice and video
-depend on WebRTC support in WKWebView (macOS) or WebKitGTK (Linux); screen
-sharing may not work on Linux.
-
-`update.sh` follows Pake's latest GitHub release through
-`lib/pake-webapp-update.sh`. On a bump, check that the `jq` edits in
-`lib/pake-webapp.nix` still match Pake's `pake.json` and `tauri*.conf.json`.
+`icon.png` is Discord's white Symbol.svg from discord.com/branding on Blurple
+(#5865F2), 512x512. `camera` and `microphone` let voice and video calls ask for
+access. Desktop-client features (overlay, Krisp noise suppression, game
+activity) are not available.

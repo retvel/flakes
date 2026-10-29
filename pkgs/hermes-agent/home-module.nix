@@ -179,6 +179,9 @@ in
           ]
           ''
             export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+            # The activation PATH has no systemctl; Hermes runs it (and
+            # loginctl) by name too.
+            export PATH=${lib.escapeShellArg (dirOf config.systemd.user.systemctlPath)}:"$PATH"
             hermesGateway() {
               $DRY_RUN_CMD env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} ${hermes} gateway "$@"
             }

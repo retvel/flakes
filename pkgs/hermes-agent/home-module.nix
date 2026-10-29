@@ -46,6 +46,7 @@ let
     + "'import hermes_bootstrap, runpy; runpy.run_module(\"${module}\", run_name=\"__main__\", alter_sys=True)'";
 
   hermes = "${common.effectivePackage cfg}/bin/hermes";
+  stamp = lib.escapeShellArg "${cfg.hermesHome}/.nix-gateway-unit";
 
   # What the running gateway was started with: the drop-in (and with it the
   # package) and what each switch writes to config.yaml and .env, which
@@ -177,10 +178,39 @@ in
 
       xdg.configFile."systemd/user/hermes-gateway.service.d/10-nix.conf".source = gatewayDropIn;
 
+      # Restarts the gateway onto what this generation wrote (gatewayStamp),
+      # then records it. `hermes gateway restart` refuses while chat turns,
+      # cron jobs or delegations are live (it would interrupt them), so this
+      # retries every minute until the gateway is idle; a switch never waits
+      # for it or fails because of it. A stopped gateway stays stopped: its
+      # unit is refreshed, and the config read, on the next start.
+      systemd.user.services.hermes-gateway-refresh = {
+        Unit = {
+          Description = "Restart hermes-gateway onto the Nix-written config once it is idle";
+          StartLimitIntervalSec = 0;
+        };
+        Service = {
+          Type = "oneshot";
+          Environment = [
+            "HERMES_HOME=${cfg.hermesHome}"
+            "PATH=${lib.makeBinPath [ pkgs.coreutils ]}:${dirOf config.systemd.user.systemctlPath}"
+          ];
+          ExecStart = pkgs.writeShellScript "hermes-gateway-refresh" ''
+            set -eu
+            [ "$(readlink ${stamp} 2>/dev/null)" != ${gatewayStamp} ] || exit 0
+            if systemctl --user is-active --quiet hermes-gateway; then
+              ${hermes} gateway restart
+            fi
+            ln -sfn ${gatewayStamp} ${stamp}
+          '';
+          Restart = "on-failure";
+          RestartSec = 60;
+        };
+      };
+
       # After reloadSystemd, so a `hermes-agent` unit this switch removes is
       # stopped first. The stamp links to gatewayStamp, which changes with
-      # the package, the drop-in and the config. A stopped gateway stays
-      # stopped; its unit is refreshed on the next `hermes gateway start`.
+      # the package, the drop-in and the config.
       home.activation.hermesGatewayUnit =
         lib.hm.dag.entryAfter
           [
@@ -193,20 +223,14 @@ in
             # The activation PATH has no systemctl; Hermes runs it (and
             # loginctl) by name too.
             export PATH=${lib.escapeShellArg (dirOf config.systemd.user.systemctlPath)}:"$PATH"
-            hermesGateway() {
-              $DRY_RUN_CMD env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} ${hermes} gateway "$@"
-            }
-            stamp=${lib.escapeShellArg "${cfg.hermesHome}/.nix-gateway-unit"}
             if [ ! -e ${lib.escapeShellArg "${unitDir}/hermes-gateway.service"} ]; then
               $DRY_RUN_CMD systemctl --user daemon-reload
-              hermesGateway install --start-now --start-on-login
-            elif [ "$(readlink "$stamp" 2>/dev/null)" != ${gatewayStamp} ]; then
+              $DRY_RUN_CMD env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} ${hermes} gateway install --start-now --start-on-login
+              $DRY_RUN_CMD ln -sfn ${gatewayStamp} ${stamp}
+            elif [ "$(readlink ${stamp} 2>/dev/null)" != ${gatewayStamp} ]; then
               $DRY_RUN_CMD systemctl --user daemon-reload
-              if systemctl --user is-active --quiet hermes-gateway; then
-                hermesGateway restart
-              fi
+              $DRY_RUN_CMD systemctl --user restart --no-block hermes-gateway-refresh
             fi
-            $DRY_RUN_CMD ln -sfn ${gatewayStamp} "$stamp"
           '';
     })
 

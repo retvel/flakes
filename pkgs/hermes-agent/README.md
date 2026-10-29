@@ -137,12 +137,17 @@ with what it would generate and rewrites it when they differ.
   `<package>/bin/hermes gateway run` and sets `PATH`, `HERMES_MANAGED=false`
   and `hermesGatewayUnit.environment`.
 - Each switch, after the user units are reloaded: `hermes gateway install
-  --start-now --start-on-login` if the unit is missing, otherwise `hermes
-  gateway restart` when the package, the drop-in, `settings`, `environment`
-  or `environmentFiles` changed (Hermes reads config.yaml and .env only at
-  start; the restart also refreshes the unit's store paths). A stopped
-  gateway stays stopped; its unit is refreshed on the next `hermes gateway
-  start`. `~/.hermes/.nix-gateway-unit` links to the stamp last applied.
+  --start-now --start-on-login` if the unit is missing. Otherwise, when the
+  package, the drop-in, `settings`, `environment` or `environmentFiles`
+  changed (Hermes reads config.yaml and .env only at start), it starts
+  `hermes-gateway-refresh`, which runs `hermes gateway restart` (that also
+  refreshes the unit's store paths). Hermes refuses that while chat turns,
+  cron jobs or delegations are live, so the refresh retries every minute
+  until the gateway is idle: a switch never interrupts a conversation and
+  never fails because of one (`journalctl --user -u hermes-gateway-refresh`).
+  A stopped gateway stays stopped; its unit is refreshed on the next
+  `hermes gateway start`. `~/.hermes/.nix-gateway-unit` links to the stamp
+  last applied.
 - Needs `nixManagesConfig = false`: managed mode refuses `hermes gateway
   install`.
 

@@ -81,11 +81,24 @@ Then set it up as after install.sh: `hermes setup`, `hermes model`, keys in
   user service with your PATH (`~/.local/bin`, your Nix profiles,
   `/run/current-system/sw/bin`) after Hermes' own tools, like the unit
   `hermes gateway install` writes.
+- The gateway unit also has the rest of that unit (in both modes):
+  `HERMES_SUPERVISED_CHILD=1`, exit 75 as a requested restart and 78 as a
+  fatal config error, the planned-stop mark on `ExecStop` (a `systemctl
+  stop` or a switch no longer leaves the unit failed), the cgroup cleanup on
+  `ExecStopPost`, `ExecReload` (SIGUSR1) and `TimeoutStopSec=70`.
 
 What differs:
 
 - Updates come from Nix (`nix flake update retvel` and a rebuild), not
   `hermes update`; the services restart on the new version after the switch.
+- The unit is `hermes-agent`, not `hermes-gateway`, so `hermes gateway
+  status` reports "Running manually"; use `systemctl --user` instead. Under
+  the name `hermes-gateway`, `hermes gateway start` and `restart` would find
+  the unit different from the one they generate and try to rewrite it in
+  the read-only store.
+- `hermes gateway status` warns "install out of sync" for node, npm,
+  ripgrep and ffmpeg: Hermes looks for its pm-pinned copies, while the Nix
+  package brings its own on the PATH.
 - Each switch merges `settings` (and `terminal.cwd` from `workingDirectory`)
   into `config.yaml`; other keys you set with the CLI stay. `.env` is only
   touched when `environment` or `environmentFiles` is set.

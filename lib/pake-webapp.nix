@@ -26,11 +26,7 @@ stdenvNoCC.mkDerivation {
   inherit (sources) version;
 
   src = fetchurl {
-    # The dmg is <App>-aarch64.dmg; pins written while its name carried a
-    # config hash record that name as `asset`.
-    url = "https://github.com/retvel/flakes/releases/download/${sources.tag}/${
-      sources.asset or "${config.name}-aarch64.dmg"
-    }";
+    url = "https://github.com/retvel/flakes/releases/download/${sources.tag}/${config.name}-aarch64.dmg";
     hash = sources.hashes.${system};
   };
 

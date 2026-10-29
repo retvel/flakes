@@ -11,7 +11,7 @@
 | `pkgs/<name>/nixos-module.nix`, `darwin-module.nix` | Same shape as `module.nix`, exported only to `nixosModules` or `darwinModules`. |
 | `pkgs/<name>/home-module.nix` | Same shape, exported as `homeManagerModules.<name>`. |
 | `pkgs/<name>/README.md` | Optional. The package's usage, options and maintenance notes. |
-| `lib/pake-webapp.nix` | Package for `pkgs/webapp-*`: unpacks the webapp's dmg from this repo's "Pake (X.Y.Z)" release. Each webapp has `pake.json` (Pake's `--config`), `icon.png`, and `hashes.json` (`{ version, tag, asset, hashes }`, written by `webapp.yml`). |
+| `lib/pake-webapp.nix` | Package for `pkgs/webapp-*`: unpacks the webapp's dmg from this repo's "Pake (X.Y.Z)" release. Each webapp has `pake.json` (Pake's `--config`), `icon.png`, and `hashes.json` (`{ version, tag, config, hashes }`, written by `webapp.yml`). |
 | `.github/workflows/check.yml` | `nix flake check` on Linux x86_64/aarch64 and macOS; the x86_64 job pushes `hermes-agent` (only) to retvel.cachix.org. |
-| `.github/workflows/webapp.yml` | Daily (05:41 UTC) and on `pkgs/webapp-*/{pake.json,icon.png}` changes: builds each changed webapp with pake-cli on macOS (Apple Silicon), adds `<App>-<config hash>-aarch64.dmg` to release "Pake (X.Y.Z)" (`pake-vX.Y.Z`, one per pake-cli version), commits `Update <name> to vX.Y.Z` with the pin. |
+| `.github/workflows/webapp.yml` | Daily (05:41 UTC) and on `pkgs/webapp-*/{pake.json,icon.png}` changes: builds each changed webapp with pake-cli on macOS (Apple Silicon), uploads `<App>-aarch64.dmg` to release "Pake (X.Y.Z)" (`pake-vX.Y.Z`, one per pake-cli version; a config change replaces it), commits `Update <name> to vX.Y.Z` with the pin. |
 | `.github/workflows/update.yml` | Twice daily (03:17, 15:17 UTC): runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`, then pushes `hermes-agent` to retvel.cachix.org. |

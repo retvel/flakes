@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tw93/Pake/main/schema/pake.schema.json",
+  "url": "https://claude.ai",
+  "name": "Claude",
+  "identifier": "com.pake.claude",
+  "width": 1280,
+  "height": 860,
+  "hideTitleBar": true,
+  "enableFind": true,
+  "newWindow": true
+}

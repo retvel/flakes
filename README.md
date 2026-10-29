@@ -31,8 +31,8 @@ Nix packages by `Prompter`.
 | [nullclaw-chat-ui](pkgs/nullclaw-chat-ui) | NullClaw's web chat UI as static files, to serve from any web server |
 | [rayfish](pkgs/rayfish) | P2P mesh VPN (iroh), with a nix-darwin/NixOS service module |
 | [utm](pkgs/utm) | UTM virtual machine host for macOS from the upstream release dmg, no compilation |
-| [webapp-claude](pkgs/webapp-claude) | claude.ai as a desktop app, built from Pake's release source with Tauri (compiles Rust) |
-| [webapp-discord](pkgs/webapp-discord) | Discord's web client as a desktop app, built the same way |
+| [webapp-claude](pkgs/webapp-claude) | claude.ai as a macOS app, built with Pake by this repo's CI and published as a release; Apple Silicon only, no compilation |
+| [webapp-discord](pkgs/webapp-discord) | Discord's web client as a macOS app, built the same way |
 
 ## Usage
 

@@ -1,10 +1,11 @@
 name: Webapps
 
-# Builds every pkgs/webapp-*/ with Pake on Apple Silicon and publishes the dmg
-# as a release of this repo, then pins it in that webapp's hashes.json. A
-# release's tag names the pake-cli version and a hash of pake.json + icon.png,
-# so a new Pake release or a config change builds a new release and an
-# unchanged one builds nothing.
+# Builds every pkgs/webapp-*/ with Pake on Apple Silicon and publishes the dmgs
+# in one release per pake-cli version, "Pake (X.Y.Z)" tagged pake-vX.Y.Z, then
+# pins each in its webapp's hashes.json. An asset's name carries a hash of its
+# pake.json + icon.png, so a config change adds an asset to the release (old
+# pins keep working), a new pake-cli makes a new release with every webapp, and
+# nothing changed builds nothing.
 
 on:
   # Daily, off the top of the hour, to pick up new pake-cli releases.
@@ -30,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       pake: ${{ steps.plan.outputs.pake }}
+      tag: ${{ steps.plan.outputs.tag }}
       webapps: ${{ steps.plan.outputs.webapps }}
     env:
       GH_TOKEN: ${{ github.token }}
@@ -38,17 +40,24 @@ jobs:
       - id: plan
         run: |
           pake="$(npm view pake-cli version)"
+          tag="pake-v$pake"
           webapps='[]'
           for dir in pkgs/webapp-*/; do
             name="$(basename "$dir")"
-            config="$(cat "$dir/pake.json" "$dir/icon.png" | sha256sum | cut -c1-8)"
-            tag="$name-v$pake-$config"
-            [ "$(jq -r .tag "$dir/hashes.json")" != "$tag" ] || continue
             product="$(jq -r .name "$dir/pake.json")"
-            webapps="$(jq -c --arg n "$name" --arg t "$tag" --arg p "$product" \
-              '. + [{name: $n, tag: $t, product: $p}]' <<<"$webapps")"
+            config="$(cat "$dir/pake.json" "$dir/icon.png" | sha256sum | cut -c1-8)"
+            asset="$product-$config-aarch64.dmg"
+            [ "$(jq -r '.tag + "/" + .asset' "$dir/hashes.json")" != "$tag/$asset" ] || continue
+            webapps="$(jq -c --arg n "$name" --arg a "$asset" \
+              '. + [{name: $n, asset: $a}]' <<<"$webapps")"
           done
+          # Made here, not by the parallel builds, which would race to create it.
+          if [ "$webapps" != '[]' ] && ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --target "$GITHUB_SHA" --title "Pake ($pake)" \
+              --notes "pkgs/webapp-* built with pake-cli $pake for Apple Silicon. Each dmg is named <app>-<hash of its pake.json + icon.png>-aarch64.dmg."
+          fi
           echo "pake=$pake" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "webapps=$webapps" >> "$GITHUB_OUTPUT"
           echo "pake-cli $pake; to build: $webapps"
 
@@ -64,9 +73,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       PAKE: ${{ needs.plan.outputs.pake }}
+      TAG: ${{ needs.plan.outputs.tag }}
       NAME: ${{ matrix.name }}
-      TAG: ${{ matrix.tag }}
-      PRODUCT: ${{ matrix.product }}
+      ASSET: ${{ matrix.asset }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -75,8 +84,8 @@ jobs:
       - name: Build and publish
         run: |
           # Left over from a run whose pin step failed: only the pin is missing.
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "$TAG already published"
+          if gh release view "$TAG" --json assets -q '.assets[].name' | grep -qxF "$ASSET"; then
+            echo "$ASSET already published"
             exit 0
           fi
           npm install -g "pake-cli@$PAKE"
@@ -84,12 +93,8 @@ jobs:
           pake --config pake.json --icon "$PWD/icon.png" --json > "$RUNNER_TEMP/result.json"
           dmg="$(jq -r '.outputs[] | select(.format == "dmg") | .path' "$RUNNER_TEMP/result.json" | head -n1)"
           [ -n "$dmg" ] || { cat "$RUNNER_TEMP/result.json"; exit 1; }
-          asset="$RUNNER_TEMP/$PRODUCT-aarch64.dmg"
-          cp "$dmg" "$asset"
-          gh release create "$TAG" "$asset" \
-            --target "$GITHUB_SHA" \
-            --title "$NAME (pake-cli $PAKE)" \
-            --notes "$PRODUCT for Apple Silicon, built from pkgs/$NAME/pake.json with pake-cli $PAKE. Installed by the $NAME package."
+          cp "$dmg" "$RUNNER_TEMP/$ASSET"
+          gh release upload "$TAG" "$RUNNER_TEMP/$ASSET"
 
   pin:
     needs: [plan, build]
@@ -98,6 +103,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       PAKE: ${{ needs.plan.outputs.pake }}
+      TAG: ${{ needs.plan.outputs.tag }}
       WEBAPPS: ${{ needs.plan.outputs.webapps }}
     steps:
       - uses: actions/checkout@v4
@@ -108,14 +114,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           jq -c '.[]' <<<"$WEBAPPS" | while read -r webapp; do
             name="$(jq -r .name <<<"$webapp")"
-            tag="$(jq -r .tag <<<"$webapp")"
-            product="$(jq -r .product <<<"$webapp")"
+            asset="$(jq -r .asset <<<"$webapp")"
             # Its build failed; leave the old pin.
-            gh release view "$tag" >/dev/null 2>&1 || { echo "::error::$tag was not published"; continue; }
-            url="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/$product-aarch64.dmg"
+            gh release view "$TAG" --json assets -q '.assets[].name' | grep -qxF "$asset" \
+              || { echo "::error::$asset was not published"; continue; }
+            url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$asset"
             hash="$(nix store prefetch-file --json "$url" | jq -r .hash)"
-            jq -n --arg v "$PAKE" --arg t "$tag" --arg h "$hash" \
-              '{version: $v, tag: $t, hashes: {"aarch64-darwin": $h}}' > "pkgs/$name/hashes.json"
+            jq -n --arg v "$PAKE" --arg t "$TAG" --arg a "$asset" --arg h "$hash" \
+              '{version: $v, tag: $t, asset: $a, hashes: {"aarch64-darwin": $h}}' > "pkgs/$name/hashes.json"
             git commit -m "Update $name to v$PAKE" -- "pkgs/$name/hashes.json"
           done
           git pull --rebase

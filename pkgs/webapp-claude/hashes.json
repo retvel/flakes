@@ -1,8 +1,8 @@
 {
   "version": "3.17.8",
   "tag": "pake-v3.17.8",
-  "asset": "Claude-545c7c96-aarch64.dmg",
+  "config": "545c7c96",
   "hashes": {
-    "aarch64-darwin": "sha256-9hmNL1SK7Sjz7/k55UXJNAOeyDqPNIFAqnmRBhnHGNM="
+    "aarch64-darwin": "sha256-6xoPHGt/rjujVgPn/fofIoqBYIu4b8OUC9JJ4d1F/WA="
   }
 }

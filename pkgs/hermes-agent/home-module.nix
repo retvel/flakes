@@ -46,6 +46,16 @@ let
     + "'import hermes_bootstrap, runpy; runpy.run_module(\"${module}\", run_name=\"__main__\", alter_sys=True)'";
 
   hermes = "${common.effectivePackage cfg}/bin/hermes";
+
+  # What the running gateway was started with: the drop-in (and with it the
+  # package) and what each switch writes to config.yaml and .env, which
+  # Hermes only reads at start.
+  gatewayStamp = pkgs.writeText "hermes-gateway-stamp" (
+    builtins.toJSON {
+      dropIn = "${gatewayDropIn}";
+      inherit (cfg) settings environment environmentFiles;
+    }
+  );
   unitCfg = cfg.hermesGatewayUnit;
   unitDir = "${config.xdg.configHome}/systemd/user";
 
@@ -94,8 +104,9 @@ in
       `hermes gateway install` writes on Tier 1, in place of `gateway.enable`.
       `hermes gateway status`, `start`, `stop` and `restart` then manage it.
       Each switch installs it if missing, and otherwise runs
-      `hermes gateway restart` when the package or the drop-in changed, which
-      points the unit at the new store paths. A drop-in runs the package's
+      `hermes gateway restart` when the package, the drop-in, `settings`,
+      `environment` or `environmentFiles` changed, which also points the unit
+      at the new store paths. A drop-in runs the package's
       wrapper and sets PATH (Linux only)
     '';
 
@@ -167,9 +178,9 @@ in
       xdg.configFile."systemd/user/hermes-gateway.service.d/10-nix.conf".source = gatewayDropIn;
 
       # After reloadSystemd, so a `hermes-agent` unit this switch removes is
-      # stopped first. The stamp links to the drop-in, whose store path
-      # changes with the package. A stopped gateway stays stopped; its unit
-      # is refreshed on the next `hermes gateway start`.
+      # stopped first. The stamp links to gatewayStamp, which changes with
+      # the package, the drop-in and the config. A stopped gateway stays
+      # stopped; its unit is refreshed on the next `hermes gateway start`.
       home.activation.hermesGatewayUnit =
         lib.hm.dag.entryAfter
           [
@@ -189,13 +200,13 @@ in
             if [ ! -e ${lib.escapeShellArg "${unitDir}/hermes-gateway.service"} ]; then
               $DRY_RUN_CMD systemctl --user daemon-reload
               hermesGateway install --start-now --start-on-login
-            elif [ "$(readlink "$stamp" 2>/dev/null)" != ${gatewayDropIn} ]; then
+            elif [ "$(readlink "$stamp" 2>/dev/null)" != ${gatewayStamp} ]; then
               $DRY_RUN_CMD systemctl --user daemon-reload
               if systemctl --user is-active --quiet hermes-gateway; then
                 hermesGateway restart
               fi
             fi
-            $DRY_RUN_CMD ln -sfn ${gatewayDropIn} "$stamp"
+            $DRY_RUN_CMD ln -sfn ${gatewayStamp} "$stamp"
           '';
     })
 

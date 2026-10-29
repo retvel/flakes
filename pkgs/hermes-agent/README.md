@@ -138,10 +138,11 @@ with what it would generate and rewrites it when they differ.
   and `hermesGatewayUnit.environment`.
 - Each switch, after the user units are reloaded: `hermes gateway install
   --start-now --start-on-login` if the unit is missing, otherwise `hermes
-  gateway restart` when the package or the drop-in changed (it refreshes the
-  unit's store paths first). A stopped gateway stays stopped; its unit is
-  refreshed on the next `hermes gateway start`. `~/.hermes/.nix-gateway-unit`
-  links to the drop-in last applied.
+  gateway restart` when the package, the drop-in, `settings`, `environment`
+  or `environmentFiles` changed (Hermes reads config.yaml and .env only at
+  start; the restart also refreshes the unit's store paths). A stopped
+  gateway stays stopped; its unit is refreshed on the next `hermes gateway
+  start`. `~/.hermes/.nix-gateway-unit` links to the stamp last applied.
 - Needs `nixManagesConfig = false`: managed mode refuses `hermes gateway
   install`.
 

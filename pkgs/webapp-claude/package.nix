@@ -30,7 +30,7 @@ let
   };
 in
 rustPlatform.buildRustPackage {
-  pname = "claude-pake";
+  pname = "webapp-claude";
   inherit (sources) version;
 
   src = fetchFromGitHub {

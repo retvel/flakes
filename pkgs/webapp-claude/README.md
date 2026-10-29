@@ -1,4 +1,4 @@
-# claude-pake
+# webapp-claude
 
 [claude.ai](https://claude.ai) as a desktop app, built with
 [Pake](https://github.com/tw93/Pake) (Tauri + the system WebView). Supported
@@ -6,10 +6,10 @@ systems: `aarch64-darwin`, `aarch64-linux`, and `x86_64-linux`.
 
 ```nix
 inputs.retvel.url = "github:retvel/flakes";
-environment.systemPackages = [ inputs.retvel.packages.${system}.claude-pake ];
+environment.systemPackages = [ inputs.retvel.packages.${system}.webapp-claude ];
 ```
 
-The overlay also provides `pkgs.retvel.claude-pake`. On macOS the app is
+The overlay also provides `pkgs.retvel.webapp-claude`. On macOS the app is
 `Claude.app` under `Applications/` in the package; on Linux, `bin/pake` plus a
 desktop entry named Claude.
 
@@ -41,6 +41,6 @@ into the platform icons.
 ## Updating
 
 `update.sh` follows Pake's latest GitHub release: it sets the version and
-source hash, then gets `cargoHash` by building `claude-pake.cargoDeps` against a
+source hash, then gets `cargoHash` by building `webapp-claude.cargoDeps` against a
 fake hash. On a bump, check that the `jq` edits in `postPatch` still match
 Pake's `pake.json` and `tauri*.conf.json` layout.

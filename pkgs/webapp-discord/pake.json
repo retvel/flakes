@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tw93/Pake/main/schema/pake.schema.json",
+  "url": "https://discord.com/app",
+  "name": "Discord",
+  "identifier": "com.pake.discord",
+  "width": 1280,
+  "height": 860,
+  "hideTitleBar": true,
+  "enableFind": true,
+  "newWindow": true,
+  "camera": true,
+  "microphone": true
+}

@@ -6,10 +6,18 @@
   autoPatchelfHook,
   makeDesktopItem,
   copyDesktopItems,
+  runtimeShell,
+  curl,
+  jq,
+  coreutils,
+  findutils,
+  libnotify,
+  fontconfig,
   libglvnd,
   libxcb,
   libxkbcommon,
   wayland,
+  vulkan-loader,
 }:
 
 let
@@ -43,6 +51,17 @@ let
     url = "https://releases.herdr.dev/core/${sources.core}/herdr-core-${target}.tar.gz";
     hash = hashes."core-${system}";
   };
+
+  # See herdr-app.sh.
+  checkPath = lib.makeBinPath (
+    [
+      curl
+      jq
+      coreutils
+      findutils
+    ]
+    ++ lib.optional (!isDarwin) libnotify
+  );
 in
 stdenv.mkDerivation {
   pname = "herdr";
@@ -64,6 +83,8 @@ stdenv.mkDerivation {
         copyDesktopItems
       ];
   buildInputs = lib.optionals (!isDarwin) [
+    # Linked on aarch64 only.
+    fontconfig.lib
     libxcb
     libxkbcommon
     stdenv.cc.cc.lib
@@ -72,6 +93,7 @@ stdenv.mkDerivation {
   runtimeDependencies = lib.optionals (!isDarwin) [
     libglvnd
     libxkbcommon
+    vulkan-loader
     wayland
   ];
 
@@ -103,20 +125,32 @@ stdenv.mkDerivation {
         mkdir -p "$out/Applications"
         cp -R Herdr.app "$out/Applications/"
         # Exec by full path so the app finds its resources inside the bundle.
-        cat > "$out/bin/herdr-app" <<SH
-        #!/bin/sh
-        exec "$out/Applications/Herdr.app/Contents/MacOS/Herdr" "\$@"
-        SH
-        chmod +x "$out/bin/herdr-app"
+        exe="$out/Applications/Herdr.app/Contents/MacOS/Herdr"
       ''
     else
       ''
-        install -m755 herdr-app/herdr-app "$out/bin/herdr-app"
+        install -Dm755 herdr-app/herdr-app "$out/libexec/herdr-app"
         install -Dm644 herdr-app/herdr-app.svg \
           "$out/share/icons/hicolor/scalable/apps/herdr-app.svg"
+        exe="$out/libexec/herdr-app"
       ''
   )
   + ''
+    # The pinned release manifests, served to the app by the wrapper.
+    releases="$out/share/herdr/releases"
+    install -Dm644 ${./app-latest.json} "$releases/app/latest.json"
+    install -Dm644 ${./core-latest.json} "$releases/core/latest.json"
+    install -Dm644 ${./core-latest.json} "$releases/core/${sources.core}/manifest.json"
+
+    substitute ${./herdr-app.sh} "$out/bin/herdr-app" \
+      --subst-var-by shell ${runtimeShell} \
+      --subst-var-by releases "$releases" \
+      --subst-var-by appPath "$out/bin:${lib.makeBinPath [ curl ]}" \
+      --subst-var-by checkPath ${checkPath} \
+      --subst-var-by appVersion ${sources.app} \
+      --subst-var-by coreVersion ${sources.core} \
+      --subst-var-by exe "$exe"
+    chmod +x "$out/bin/herdr-app"
     runHook postInstall
   '';
 

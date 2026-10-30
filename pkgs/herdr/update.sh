@@ -6,8 +6,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 releases=https://releases.herdr.dev
-app="$(curl -fsS "$releases/app/latest.json" | jq -r '.version // empty')"
-core="$(curl -fsS "$releases/core/latest.json" | jq -r '.version // empty')"
+# Kept beside hashes.json: the herdr-app wrapper serves them to the app as its
+# release server, so it sees itself as up to date.
+app_manifest="$(curl -fsS "$releases/app/latest.json")"
+core_manifest="$(curl -fsS "$releases/core/latest.json")"
+app="$(jq -r '.version // empty' <<<"$app_manifest")"
+core="$(jq -r '.version // empty' <<<"$core_manifest")"
 [ -n "$app" ] && [ -n "$core" ] || { echo "herdr: no version in latest.json" >&2; exit 1; }
 
 # The workflow names its commit after .version, so it carries both.
@@ -34,4 +38,6 @@ hashes="$(jq -n \
 
 jq -n --arg v "$version" --arg a "$app" --arg c "$core" --argjson h "$hashes" \
   '{version: $v, app: $a, core: $c, hashes: $h}' > hashes.json
+jq . <<<"$app_manifest" > app-latest.json
+jq . <<<"$core_manifest" > core-latest.json
 echo "herdr: $current -> $version"

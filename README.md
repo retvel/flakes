@@ -31,7 +31,7 @@ Nix packages by `Prompter`.
 | [nullclaw](pkgs/nullclaw) | Small, fully autonomous AI assistant in one static Zig binary, with a nix-darwin/NixOS service module |
 | [nullclaw-nightly](pkgs/nullclaw) | NullClaw's rolling nightly build, bumped daily |
 | [nullclaw-chat-ui](pkgs/nullclaw-chat-ui) | NullClaw's web chat UI as static files, to serve from any web server |
-| [opencode](pkgs/opencode) | OpenCode AI coding agent from upstream's prebuilt npm release, kept on Nix (no self-update); Apple Silicon macOS and Linux, no compilation |
+| [opencode](pkgs/opencode) | OpenCode 2 AI coding agent from upstream's prebuilt npm release, kept on Nix (no self-update); Apple Silicon macOS and Linux, no compilation |
 | [rayfish](pkgs/rayfish) | P2P mesh VPN (iroh), with a nix-darwin/NixOS service module |
 | [utm](pkgs/utm) | UTM virtual machine host for macOS from the upstream release dmg, no compilation |
 | [webapp-claude](pkgs/webapp-claude) | claude.ai as a macOS app, built with Pake by this repo's CI and published as a release; Apple Silicon only, no compilation |

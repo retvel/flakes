@@ -31,7 +31,14 @@ doesn't look for or announce newer releases either: updates come through this
 flake. The flag wins over `~/.codex/config.toml`; run
 `libexec/codex/bin/codex` to get the check back.
 
-`codex app-server` daemon mode copies the running package into
-`~/.codex/packages/standalone` and updates that copy itself, as for any npm
-install; llm-agents.nix patches that out, which a prebuilt binary can't.
-The CLI itself runs from the store.
+`codex app-server daemon` would copy the running package into
+`$CODEX_HOME/packages/app-server-daemon/releases` and keep that copy updated
+from upstream, unless `current` there already names a package (llm-agents.nix
+patches the source instead). So the wrapper points
+`$CODEX_HOME/packages/app-server-daemon/current` at this package's
+`libexec/codex`, replacing a link to an older one: the daemon then runs from
+the store, and its updater stays off, since it only follows a release under
+`releases/`. A real directory there is left alone.
+
+Everything else in `~/.codex` (config, login, sessions) is yours; the store
+holds only the program.

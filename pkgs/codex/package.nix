@@ -5,6 +5,7 @@
   installShellFiles,
   makeWrapper,
   patchelf,
+  coreutils,
 }:
 
 let
@@ -64,7 +65,21 @@ stdenv.mkDerivation {
     # subcommand and wins over config.toml.
     mkdir -p "$out/libexec" "$out/bin"
     cp -R . "$out/libexec/codex"
+    #
+    # `codex app-server daemon` copies its package into
+    # $CODEX_HOME/packages/app-server-daemon/releases and keeps it updated,
+    # unless `current` there already names a package. Point it at this one:
+    # the daemon then runs from the store, and its updater stays off, as it
+    # only follows a release under releases/.
     makeWrapper "$out/libexec/codex/bin/codex" "$out/bin/codex" \
+      --run ${lib.escapeShellArg ''
+        link="''${CODEX_HOME:-$HOME/.codex}/packages/app-server-daemon/current"
+        if [ "$(${coreutils}/bin/readlink "$link")" != "${placeholder "out"}/libexec/codex" ] &&
+          { [ -L "$link" ] || [ ! -e "$link" ]; }; then
+          ${coreutils}/bin/mkdir -p "''${link%/*}" &&
+            ${coreutils}/bin/ln -sfn "${placeholder "out"}/libexec/codex" "$link" || true
+        fi
+      ''} \
       --add-flags "-c check_for_update_on_startup=false"
   ''
   + lib.optionalString isLinux ''

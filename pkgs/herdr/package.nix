@@ -8,10 +8,6 @@
   copyDesktopItems,
   runtimeShell,
   curl,
-  jq,
-  coreutils,
-  findutils,
-  libnotify,
   fontconfig,
   libglvnd,
   libxcb,
@@ -51,17 +47,6 @@ let
     url = "https://releases.herdr.dev/core/${sources.core}/herdr-core-${target}.tar.gz";
     hash = hashes."core-${system}";
   };
-
-  # See herdr-update-check.sh.
-  checkPath = lib.makeBinPath (
-    [
-      curl
-      jq
-      coreutils
-      findutils
-    ]
-    ++ lib.optional (!isDarwin) libnotify
-  );
 in
 stdenv.mkDerivation {
   pname = "herdr";
@@ -142,18 +127,12 @@ stdenv.mkDerivation {
     install -Dm644 ${./core-latest.json} "$releases/core/latest.json"
     install -Dm644 ${./core-latest.json} "$releases/core/${sources.core}/manifest.json"
 
-    substitute ${./herdr-update-check.sh} "$out/bin/herdr-update-check" \
-      --subst-var-by shell ${runtimeShell} \
-      --subst-var-by path ${checkPath} \
-      --subst-var-by appVersion ${sources.app} \
-      --subst-var-by coreVersion ${sources.core}
     substitute ${./herdr-app.sh} "$out/bin/herdr-app" \
       --subst-var-by shell ${runtimeShell} \
       --subst-var-by releases "$releases" \
       --subst-var-by appPath "$out/bin:${lib.makeBinPath [ curl ]}" \
-      --subst-var out \
       --subst-var-by exe "$exe"
-    chmod +x "$out/bin/herdr-app" "$out/bin/herdr-update-check"
+    chmod +x "$out/bin/herdr-app"
     runHook postInstall
   '';
 

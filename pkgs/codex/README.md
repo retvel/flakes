@@ -9,8 +9,8 @@ nixpkgs' and [llm-agents.nix](https://github.com/numtide/llm-agents.nix)'
 The platform package already holds upstream's whole layout, kept as is in
 `libexec/codex`: `bin/codex`, `bin/codex-code-mode-host`, `codex-path/rg`,
 `codex-resources/` (bubblewrap on Linux, the voice runtime) and
-`codex-package.json`. `bin/codex` links to it, since Codex looks for those
-files next to its real path. Shell completions for bash, fish and zsh are
+`codex-package.json`. `bin/codex` is a wrapper that execs it there, since
+Codex looks for those files next to its real path. Shell completions for bash, fish and zsh are
 generated from the binary.
 
 - macOS: upstream's signed binaries, untouched (`dontFixup`).
@@ -26,9 +26,10 @@ Systems: `aarch64-darwin`, `x86_64-linux`, `aarch64-linux`.
 integrity hash the registry publishes, so nothing is downloaded.
 
 Codex doesn't update itself here (no `CODEX_MANAGED_BY_*` package manager is
-set); at most it shows an "Update available" notice. Turn that off with
-`check_for_update_on_startup = false` in `~/.codex/config.toml`; updates come
-through this flake.
+set), and the wrapper passes `-c check_for_update_on_startup=false`, so it
+doesn't look for or announce newer releases either: updates come through this
+flake. The flag wins over `~/.codex/config.toml`; run
+`libexec/codex/bin/codex` to get the check back.
 
 `codex app-server` daemon mode copies the running package into
 `~/.codex/packages/standalone` and updates that copy itself, as for any npm

@@ -3,6 +3,7 @@
   stdenv,
   fetchurl,
   installShellFiles,
+  makeWrapper,
   patchelf,
 }:
 
@@ -43,7 +44,11 @@ stdenv.mkDerivation {
   };
   sourceRoot = "package/vendor/${target.triple}";
 
-  nativeBuildInputs = [ installShellFiles ] ++ lib.optional isLinux patchelf;
+  nativeBuildInputs = [
+    installShellFiles
+    makeWrapper
+  ]
+  ++ lib.optional isLinux patchelf;
 
   dontConfigure = true;
   dontBuild = true;
@@ -54,10 +59,13 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     # Codex finds its resources, rg and code-mode host next to its real path,
-    # so keep the layout and link the entry point.
+    # so keep the layout and exec it there. Updates come through this flake,
+    # so skip its startup check for a newer release; `-c` works before any
+    # subcommand and wins over config.toml.
     mkdir -p "$out/libexec" "$out/bin"
     cp -R . "$out/libexec/codex"
-    ln -s ../libexec/codex/bin/codex "$out/bin/codex"
+    makeWrapper "$out/libexec/codex/bin/codex" "$out/bin/codex" \
+      --add-flags "-c check_for_update_on_startup=false"
   ''
   + lib.optionalString isLinux ''
     # The voice host (and its bundled GStreamer) is the one glibc program;

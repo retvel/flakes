@@ -12,31 +12,50 @@ upstream's prebuilt releases. Nothing is compiled.
   agents in the background. The app looks for it on `PATH` (and in
   `~/.local/bin`), so installing this package is enough.
 
+## Usage
+
+Through the module (nix-darwin or NixOS), which also covers launches from
+Finder, the Dock or a desktop entry:
+
+```nix
+{
+  imports = [ inputs.retvel.darwinModules.herdr ];  # or nixosModules
+  programs.herdr.enable = true;
+}
+```
+
+| Option | Default | |
+|---|---|---|
+| `programs.herdr.enable` | `false` | Install the package and set up the below |
+| `programs.herdr.package` | this flake's `herdr` | |
+| `programs.herdr.updateCheck.enable` | `true` | Timer for update notifications |
+
 ## Update notices
 
 The app updates itself from `releases.herdr.dev`, which can't work from the
-read-only store. `bin/herdr-app` (also what the Linux desktop entry runs) sets
-`HERDR_RELEASES_URL` to a copy of the pinned release manifests in
-`share/herdr/releases`, so the app sees itself as up to date and doesn't
-download updates. Adding an ssh machine installs the pinned herdr-core there
-too. herdr-core needs nothing: run from the store, it reports itself as managed
-by nix and the app leaves it alone.
+read-only store. Pointing `HERDR_RELEASES_URL` at a copy of the pinned release
+manifests (`share/herdr/releases`) makes the app see itself as up to date, so
+it doesn't download updates; adding an ssh machine then installs the pinned
+herdr-core there too. herdr-core needs nothing: run from the store, it reports
+itself as managed by nix and the app leaves it alone.
 
-In the background, at most every 6 hours, the wrapper checks upstream's
-`latest.json` and posts a desktop notification (`notify-send` on Linux,
-`osascript` on macOS) once per newer release, saying to update through Nix.
-State is in `~/.cache/herdr-nix`; `HERDR_NIX_NO_UPDATE_CHECK=1` turns the check
-off.
+`bin/herdr-update-check` tells about newer releases instead: it reads
+upstream's `latest.json` and posts a desktop notification (`notify-send` on
+Linux, `osascript` on macOS) once per newer release, saying to update through
+Nix. It checks at most every 5 hours, keeps its state in `~/.cache/herdr-nix`,
+and does nothing with `HERDR_NIX_NO_UPDATE_CHECK=1`.
 
-On macOS, opening `Herdr.app` from Finder or the Dock skips the wrapper (the
-signed bundle can't be changed), so the app's own updater is back. Start it
-with `herdr-app` instead, or set the variable for every app, e.g. in
-nix-darwin:
+- The module sets `HERDR_RELEASES_URL` for every launch: launchd's user
+  environment on macOS (`launchd.user.envVariables`), the session variables
+  on NixOS. It runs `herdr-update-check` at login and every 6 hours from a
+  launchd agent or a systemd user timer.
+- Without the module, `bin/herdr-app` (also what the Linux desktop entry runs)
+  sets the variable and runs the check on each start. On macOS, opening
+  `Herdr.app` from Finder or the Dock skips it (the signed bundle can't be
+  changed), so the app's own updater is back; use the module there.
 
-```nix
-launchd.user.envVariables.HERDR_RELEASES_URL =
-  "file://${pkgs.retvel.herdr}/share/herdr/releases";
-```
+After enabling the module, quit and reopen Herdr so it starts with the
+variable (on NixOS, log in again first: session variables are read at login).
 
 Systems: `aarch64-darwin` (the dmg is arm64 only), `x86_64-linux`,
 `aarch64-linux`.

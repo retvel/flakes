@@ -1,0 +1,13 @@
+{
+  "version": "0.1.8+core.0.1.14",
+  "app": "0.1.8",
+  "core": "0.1.14",
+  "hashes": {
+    "app-aarch64-darwin": "sha256-FR6e0zgJnvVdxRqs7Dhljh1aCZ/sScpl24/j5FKgHQ8=",
+    "app-x86_64-linux": "sha256-pjJGUkgDQZX+X6jyZrfjV4YIst3FVp2P06GzC7tkaRs=",
+    "app-aarch64-linux": "sha256-DJwXqGI7Hc3wjiL1n5eWn6RHz320AbMw+9XFwPtS2X8=",
+    "core-aarch64-darwin": "sha256-ylJDKdLgYwIZVQBV3McfQqr9hfujVuDVQ9b1EkRIeXA=",
+    "core-x86_64-linux": "sha256-6dur3q0M4M495RtvVMyVSe/tu0Gy+ESLaTKrDRRCND4=",
+    "core-aarch64-linux": "sha256-Gc72ouUvFMIsS28/2vGkYtLa/HjosD+rv61bBjR3o3A="
+  }
+}

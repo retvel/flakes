@@ -14,7 +14,7 @@ let
   inherit (sources) version hashes;
   inherit (stdenv.hostPlatform) system isLinux;
 
-  # npm's per-platform package of opencode-ai (OpenCode 1, the stable line).
+  # npm's per-platform package of OpenCode 2 (@opencode/cli-<platform>).
   npm =
     {
       aarch64-darwin = "darwin-arm64";
@@ -27,11 +27,10 @@ stdenv.mkDerivation {
   pname = "opencode";
   inherit version;
 
-  # Upstream's prebuilt release as published to npm (what `npm i -g
-  # opencode-ai` and opencode.ai/install install): one Bun-compiled binary.
-  # Nothing is compiled.
+  # Upstream's prebuilt release as published to npm (what opencode.ai/v2/install
+  # installs): one Bun-compiled binary. Nothing is compiled.
   src = fetchurl {
-    url = "https://registry.npmjs.org/opencode-${npm}/-/opencode-${npm}-${version}.tgz";
+    url = "https://registry.npmjs.org/@opencode/cli-${npm}/-/cli-${npm}-${version}.tgz";
     hash = hashes.${system};
   };
 
@@ -57,14 +56,15 @@ stdenv.mkDerivation {
   ''
   + ''
     # Updates come through this flake: no update check, and no `opencode
-    # upgrade`, which would install a second copy into ~/.opencode/bin.
+    # upgrade` (or its alias `update`), which would install a second copy
+    # into ~/.opencode/bin.
     # OpenCode downloads ripgrep into ~/.cache/opencode/bin unless one is on
     # PATH; appended, so the user's own still comes first.
     makeWrapper "$out/libexec/opencode" "$out/bin/opencode" \
       --set OPENCODE_DISABLE_AUTOUPDATE 1 \
       --suffix PATH : ${lib.makeBinPath [ ripgrep ]} \
       --run ${lib.escapeShellArg ''
-        if [ "''${1-}" = upgrade ]; then
+        if [ "''${1-}" = upgrade ] || [ "''${1-}" = update ]; then
           echo "opencode: installed through Nix; update the flake input that provides it instead" >&2
           exit 1
         fi
@@ -72,8 +72,9 @@ stdenv.mkDerivation {
 
     export HOME="$TMPDIR"
     installShellCompletion --cmd opencode \
-      --bash <(SHELL=bash "$out/bin/opencode" completion) \
-      --zsh <(SHELL=zsh "$out/bin/opencode" completion)
+      --bash <("$out/bin/opencode" --completions bash) \
+      --fish <("$out/bin/opencode" --completions fish) \
+      --zsh <("$out/bin/opencode" --completions zsh)
     runHook postInstall
   '';
 
@@ -81,7 +82,7 @@ stdenv.mkDerivation {
   installCheckPhase = ''
     runHook preInstallCheck
     export HOME="$TMPDIR"
-    test "$("$out/bin/opencode" --version)" = "$version"
+    test "$("$out/bin/opencode" --version)" = "opencode v$version"
     runHook postInstallCheck
   '';
 

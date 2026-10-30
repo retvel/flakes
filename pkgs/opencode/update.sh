@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Bump hashes.json to the latest opencode-ai on npm (OpenCode 1). Each
+# Bump hashes.json to the latest OpenCode 2 on npm (@opencode/cli, the package
+# opencode.ai/v2/install reads from opencode.ai/update/api/latest/cli/npm). Each
 # platform's package carries its integrity hash in the registry, so nothing is
 # downloaded. Needs curl and jq.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-version="$(curl -fsS https://registry.npmjs.org/opencode-ai/latest | jq -r '.version // empty')"
+version="$(curl -fsS https://registry.npmjs.org/@opencode%2fcli/latest | jq -r '.version // empty')"
 [ -n "$version" ] || { echo "opencode: no latest version on npm" >&2; exit 1; }
 current="$(jq -r .version hashes.json)"
 [ "$version" != "$current" ] || { echo "opencode: $current is latest"; exit 0; }
 
-integrity() { curl -fsS "https://registry.npmjs.org/opencode-$1/$version" | jq -er .dist.integrity; }
+integrity() { curl -fsS "https://registry.npmjs.org/@opencode%2fcli-$1/$version" | jq -er .dist.integrity; }
 jq -n --arg v "$version" \
   --arg d "$(integrity darwin-arm64)" \
   --arg l "$(integrity linux-x64)" \

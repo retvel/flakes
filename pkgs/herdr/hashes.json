@@ -1,13 +1,17 @@
 {
-  "version": "0.1.9+core.0.1.14",
+  "version": "0.1.9+core.0.1.14+cli.0.9.5",
   "app": "0.1.9",
   "core": "0.1.14",
+  "cli": "0.9.5",
   "hashes": {
     "app-aarch64-darwin": "sha256-hbe6lVYIeq+VS/ep4lDz4UzMS76vLRChoeSLj2FxBhQ=",
     "app-x86_64-linux": "sha256-2m97QPbEFsW03vjbz4t2Z30Cvk9LRdBqTWWHZoUOC0U=",
     "app-aarch64-linux": "sha256-M235p/7CWbFKDfYwWLRfniLGFzBdEjrj+XE0hq8Ge14=",
     "core-aarch64-darwin": "sha256-ylJDKdLgYwIZVQBV3McfQqr9hfujVuDVQ9b1EkRIeXA=",
     "core-x86_64-linux": "sha256-6dur3q0M4M495RtvVMyVSe/tu0Gy+ESLaTKrDRRCND4=",
-    "core-aarch64-linux": "sha256-Gc72ouUvFMIsS28/2vGkYtLa/HjosD+rv61bBjR3o3A="
+    "core-aarch64-linux": "sha256-Gc72ouUvFMIsS28/2vGkYtLa/HjosD+rv61bBjR3o3A=",
+    "cli-aarch64-darwin": "sha256-+3fCIyoFqANUITgsiUOS9BdOTjihjkivPdApAVfDp+I=",
+    "cli-x86_64-linux": "sha256-FNnovItKngEY13wyJm921GHwm0A0LrI3UpYL2J9Zkp0=",
+    "cli-aarch64-linux": "sha256-F9dTby2lCFlSNoDvJ53/ysjkojX05G/o2mwuxEFBiXw="
   }
 }

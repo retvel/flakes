@@ -16,7 +16,7 @@ let
 in
 {
   options.programs.herdr = {
-    enable = lib.mkEnableOption "Herdr and herdr-core, updated through Nix only";
+    enable = lib.mkEnableOption "Herdr (app, herdr-core and CLI), updated through Nix only";
     package = lib.mkOption {
       type = lib.types.package;
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.herdr;

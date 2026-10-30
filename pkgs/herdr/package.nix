@@ -52,7 +52,7 @@ let
     hash = hashes."core-${system}";
   };
 
-  # See herdr-app.sh.
+  # See herdr-update-check.sh.
   checkPath = lib.makeBinPath (
     [
       curl
@@ -142,15 +142,18 @@ stdenv.mkDerivation {
     install -Dm644 ${./core-latest.json} "$releases/core/latest.json"
     install -Dm644 ${./core-latest.json} "$releases/core/${sources.core}/manifest.json"
 
+    substitute ${./herdr-update-check.sh} "$out/bin/herdr-update-check" \
+      --subst-var-by shell ${runtimeShell} \
+      --subst-var-by path ${checkPath} \
+      --subst-var-by appVersion ${sources.app} \
+      --subst-var-by coreVersion ${sources.core}
     substitute ${./herdr-app.sh} "$out/bin/herdr-app" \
       --subst-var-by shell ${runtimeShell} \
       --subst-var-by releases "$releases" \
       --subst-var-by appPath "$out/bin:${lib.makeBinPath [ curl ]}" \
-      --subst-var-by checkPath ${checkPath} \
-      --subst-var-by appVersion ${sources.app} \
-      --subst-var-by coreVersion ${sources.core} \
+      --subst-var out \
       --subst-var-by exe "$exe"
-    chmod +x "$out/bin/herdr-app"
+    chmod +x "$out/bin/herdr-app" "$out/bin/herdr-update-check"
     runHook postInstall
   '';
 

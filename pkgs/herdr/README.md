@@ -26,33 +26,25 @@ Finder, the Dock or a desktop entry:
 
 | Option | Default | |
 |---|---|---|
-| `programs.herdr.enable` | `false` | Install the package and set up the below |
+| `programs.herdr.enable` | `false` | Install the package and keep the app's updater off (below) |
 | `programs.herdr.package` | this flake's `herdr` | |
-| `programs.herdr.updateCheck.enable` | `true` | Timer for update notifications |
 
-## Update notices
+## Updates come through Nix
 
 The app updates itself from `releases.herdr.dev`, which can't work from the
 read-only store. Pointing `HERDR_RELEASES_URL` at a copy of the pinned release
 manifests (`share/herdr/releases`) makes the app see itself as up to date, so
 it doesn't download updates; adding an ssh machine then installs the pinned
 herdr-core there too. herdr-core needs nothing: run from the store, it reports
-itself as managed by nix and the app leaves it alone.
+itself as managed by nix and the app leaves it alone. New releases arrive as
+this repo's `Update herdr to …` commits, picked up by `nix flake update`.
 
-`bin/herdr-update-check` tells about newer releases instead: it reads
-upstream's `latest.json` and posts a desktop notification (`notify-send` on
-Linux, `osascript` on macOS) once per newer release, saying to update through
-Nix. It checks at most every 5 hours, keeps its state in `~/.cache/herdr-nix`,
-and does nothing with `HERDR_NIX_NO_UPDATE_CHECK=1`.
-
-- The module sets `HERDR_RELEASES_URL` for every launch: launchd's user
-  environment on macOS (`launchd.user.envVariables`), the session variables
-  on NixOS. It runs `herdr-update-check` at login and every 6 hours from a
-  launchd agent or a systemd user timer.
+- The module sets the variable for every launch: launchd's user environment
+  on macOS (`launchd.user.envVariables`), the session variables on NixOS.
 - Without the module, `bin/herdr-app` (also what the Linux desktop entry runs)
-  sets the variable and runs the check on each start. On macOS, opening
-  `Herdr.app` from Finder or the Dock skips it (the signed bundle can't be
-  changed), so the app's own updater is back; use the module there.
+  sets it. On macOS, opening `Herdr.app` from Finder or the Dock skips it (the
+  signed bundle can't be changed), so the app's own updater is back; use the
+  module there.
 
 After enabling the module, quit and reopen Herdr so it starts with the
 variable (on NixOS, log in again first: session variables are read at login).
@@ -60,7 +52,7 @@ variable (on NixOS, log in again first: session variables are read at login).
 Systems: `aarch64-darwin` (the dmg is arm64 only), `x86_64-linux`,
 `aarch64-linux`.
 
-## Updates
+## Maintenance
 
 The app and herdr-core are released separately. `update.sh` follows the
 versions in `app/latest.json` and `core/latest.json` on `releases.herdr.dev`

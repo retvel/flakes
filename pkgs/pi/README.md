@@ -31,7 +31,10 @@ and npm to PATH, preserving the user's preferred Node for commands run by Pi.
 It pins `PI_PACKAGE_DIR` to this installation so a parent Pi installation cannot
 supply a different version's package assets. User configuration and sessions
 remain under the normal Pi directories and are not managed by this package.
-No telemetry or other user settings are changed by the wrapper.
+It also defaults `PI_SKIP_VERSION_CHECK=1` (no `pi.dev` latest-version
+request: updates come through this flake) and `PI_TELEMETRY=0` (no install or
+update telemetry, no provider attribution headers). Setting either variable
+yourself overrides it.
 
 ## Update
 

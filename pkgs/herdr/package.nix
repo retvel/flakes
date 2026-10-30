@@ -47,6 +47,13 @@ let
     url = "https://releases.herdr.dev/core/${sources.core}/herdr-core-${target}.tar.gz";
     hash = hashes."core-${system}";
   };
+
+  # The `herdr` CLI (terminal workspace manager): one static binary. Run from
+  # the store it disables its own `herdr update` and says to update through Nix.
+  cli = fetchurl {
+    url = "https://github.com/herdrdev/herdr/releases/download/v${sources.cli}/herdr-${target}";
+    hash = hashes."cli-${system}";
+  };
 in
 stdenv.mkDerivation {
   pname = "herdr";
@@ -87,6 +94,8 @@ stdenv.mkDerivation {
   # Stripping or patching would break the bundle's code signature. On Linux the
   # fixup phase is what runs autoPatchelf.
   dontFixup = isDarwin;
+  # Ship upstream's binaries as they are.
+  dontStrip = true;
 
   desktopItems = lib.optionals (!isDarwin) [
     (makeDesktopItem {
@@ -103,6 +112,7 @@ stdenv.mkDerivation {
     mkdir -p "$out/bin"
     install -m755 herdr-core "$out/bin/herdr-core"
     ln -s herdr-core "$out/bin/hc"
+    install -m755 ${cli} "$out/bin/herdr"
   ''
   + (
     if isDarwin then
@@ -137,7 +147,7 @@ stdenv.mkDerivation {
   '';
 
   meta = {
-    description = "Herdr desktop app with herdr-core (hc), which keeps its terminals and agents running";
+    description = "Herdr desktop app with herdr-core (hc), which keeps its terminals and agents running, and the herdr CLI";
     homepage = "https://herdr.dev/";
     license = lib.licenses.asl20;
     mainProgram = "herdr-app";

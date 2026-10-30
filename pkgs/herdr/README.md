@@ -1,13 +1,16 @@
 # herdr
 
-[Herdr](https://herdr.dev/)'s desktop app together with herdr-core, from
-upstream's prebuilt releases. Nothing is compiled.
+[Herdr](https://herdr.dev/)'s desktop app together with herdr-core and the
+`herdr` CLI, from upstream's prebuilt releases. Nothing is compiled.
 
 - `bin/herdr-app`: a wrapper that starts the app (see below). On macOS the app
   comes from `Herdr.dmg` as `$out/Applications/Herdr.app`, copied untouched
   (`dontFixup`) so its signature holds. On Linux it is upstream's `herdr-app`
   tarball in `libexec/`, patched with autoPatchelf, with a desktop entry and
   icon.
+- `bin/herdr`: the herdr CLI, a terminal workspace manager for coding agents
+  (upstream's static binary from its GitHub release). Run from the store, its
+  `herdr update` refuses and says to update through Nix, so it needs no wrapper.
 - `bin/herdr-core`, `bin/hc`: herdr-core, which runs the app's terminals and
   agents in the background. The app looks for it on `PATH` (and in
   `~/.local/bin`), so installing this package is enough.
@@ -54,12 +57,14 @@ Systems: `aarch64-darwin` (the dmg is arm64 only), `x86_64-linux`,
 
 ## Maintenance
 
-The app and herdr-core are released separately. `update.sh` follows the
-versions in `app/latest.json` and `core/latest.json` on `releases.herdr.dev`
-and pins the versioned files (`app/<version>/…`, `core/<version>/…`); the
+The app, herdr-core and the CLI are released separately. `update.sh` follows
+the versions in `app/latest.json` and `core/latest.json` on
+`releases.herdr.dev` and in `herdr.dev/latest.json` (the CLI's), and pins the
+versioned files (`app/<version>/…`, `core/<version>/…`); the
 unversioned `app/Herdr.dmg` always serves the latest release. It keeps both
 manifests as `app-latest.json` and `core-latest.json` for the wrapper.
-`version` is `<app>+core.<core>`, so the update commit names both.
+`version` is `<app>+core.<core>+cli.<cli>`, so the update commit names all
+three.
 
 On a bump, check `core_min` in `app/latest.json`: the oldest herdr-core the app
 works with. Don't run `hc update` on this herdr-core: it installs into

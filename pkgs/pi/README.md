@@ -36,6 +36,34 @@ request: updates come through this flake) and `PI_TELEMETRY=0` (no install or
 update telemetry, no provider attribution headers). Setting either variable
 yourself overrides it.
 
+## Security overrides
+
+`overrides.json` raises dependencies above upstream's lock when they have
+published advisories, as npm `overrides` on top of upstream's own. Each entry
+names its version, the advisories and why it stays compatible with Pi:
+
+- `undici` 8.10.2 → 8.12.3 (eight advisories, among them TLS validation
+  bypass and cache poisoning): same major; Pi's HTTP dispatcher uses
+  `Client`, `Pool`, `EnvHttpProxyAgent`, `install` and `setGlobalDispatcher`.
+- `minimatch` 10.2.6 → 11.0.3 (ReDoS-style amplification): a major bump
+  (`allowMajor`). 11.0 removes `makeRe()`, `AST`, `matchOne()` and `debug`;
+  Pi only calls `minimatch(path, pattern, options)`.
+
+`update.py` applies them to every new upstream lock: it drops an override
+once upstream locks that version or newer, refuses one that crosses a major
+version without `allowMajor`, re-resolves the lock with npm and checks that
+each override is what got locked. The build's install check tests that the
+installed versions match and that the APIs Pi uses are still there.
+
+The launcher runs `dist/cli.js`, not the npm bin's `dist/bundle/cli.js`: the
+bundle carries its own copies of its dependencies, so the overrides would not
+reach it. Upstream supports both ("unbundled" in its `config.js`), and they
+run the same setup; starting takes about 0.3 s longer.
+
+To add one: run `npm audit --package-lock-only` in `install-lock/`, check the
+fixed version against what Pi uses, add it to `overrides.json` and run
+`update.sh`.
+
 ## Update
 
 ```sh
@@ -44,14 +72,16 @@ nix build --dry-run .#pi
 nix build .#pi
 ```
 
-The updater needs Python 3 (standard library only). It discovers the latest
+The updater needs Python 3 (standard library only) and Nix, which provides
+npm from `nodejs-24-lts` to re-resolve the lock. It discovers the latest
 published version from npm, then downloads the installer lockfiles from the
 matching upstream `v<version>` Git tag. Missing integrity hashes are filled from
 npm release metadata, with tarball URL checks. The resulting lockfile pins all
 runtime packages and their integrity hashes. It fails rather than falling back
 to source builds when upstream's versioned installer files are unavailable.
-`hashes.json` is the release version marker used by this repo's update workflow;
-actual dependency hashes live in `install-lock/package-lock.json`.
+`hashes.json` holds the release version and the overrides applied, the marker
+this repo's update workflow uses; actual dependency hashes live in
+`install-lock/package-lock.json`.
 
 Update Pi through this flake, not `pi update self`. Node and npm pins are updated
 separately by `pkgs/nodejs-24-lts/update.sh`; they no longer wait for nixpkgs to

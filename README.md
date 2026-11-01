@@ -75,25 +75,11 @@ Systems: `aarch64-darwin`, `aarch64-linux`, `x86_64-linux`.
 
 ## Updates
 
-`.github/workflows/update.yml` runs twice a day (03:17 and 15:17 UTC). For each
-`pkgs/<name>/update.sh`, it runs the script. If files changed, it checks the
-flake (building every x86_64-linux package) and commits `Update <name> to
-vX.Y.Z` to `main`. A script or build that fails skips only that package. Run it
-from the Actions tab to update a single package.
-
-Packages that run as root, filter the network or act as agents with your
-access (`1mcp`, `codex`, `hermes-agent`, `littlesnitch`, `nullclaw`,
-`opencode`, `pi`, `rayfish`) are not committed directly: their update waits in
-a pull request from `update/<name>`, to merge after reading the upstream
-release. This needs Settings → Actions → General → "Allow GitHub Actions to
-create and approve pull requests".
-
-Hashes pin what upstream published when the update ran; they don't prove it
-is safe. Where upstream publishes checksums or signatures, `update.sh` checks
-them (Little Snitch's checksum list, Node's signed `SHASUMS256.txt`).
-
-CI pushes only `hermes-agent` (its runtime closure, built on x86_64 Linux) to
-`retvel.cachix.org`; every other package builds or downloads from upstream.
+Packages follow upstream automatically: a workflow checks for new releases
+twice a day and commits them to `main`. Pick them up with
+`nix flake update retvel`. Updates of root daemons, network filters and agents
+wait for review in a pull request first; see [SECURITY.md](SECURITY.md) for
+what is checked.
 
 ## License
 

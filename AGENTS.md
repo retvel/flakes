@@ -43,6 +43,10 @@ Pin actions by commit SHA (with the tag in a comment). Give secrets only to
 the step that needs them, never at job level, and default to
 `permissions: contents: read`.
 
+The update workflow opens pull requests for the packages in `REVIEW`, which
+needs Settings → Actions → General → "Allow GitHub Actions to create and
+approve pull requests" on the repository.
+
 ## Commits
 
 Short imperative subject lines with no prefix. The update workflow commits as

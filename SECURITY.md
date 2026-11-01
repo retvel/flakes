@@ -43,7 +43,7 @@ fixes; there are no release branches.
 - **Updates.** New releases are committed to `main` automatically once
   `nix flake check` passes, without review, except for the packages in
   `REVIEW` (root daemons, network filters, agents), whose updates wait in a
-  pull request. See [README](README.md#updates) for how the workflow runs.
+  pull request. See [LAYOUT.md](LAYOUT.md) for how the workflow runs.
 - **Binary cache.** CI pushes only `hermes-agent`'s closure, built from `main`,
   to `retvel.cachix.org`; builds from pull requests never reach it. Trusting
   that cache means trusting this repository's CI.

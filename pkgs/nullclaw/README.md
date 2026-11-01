@@ -56,25 +56,38 @@ builds of an older lock to keep working.
 
 ## Service
 
-`services.nullclaw` runs the gateway at boot, as `user`, restarting it when it
-exits: the same as upstream's `nullclaw service install` (`nullclaw gateway`,
-`NULLCLAW_HOME`, optional `.env`), but always the installed package. One
-`module.nix` covers NixOS (systemd) and nix-darwin (launchd), exported as
-`nixosModules.nullclaw` and `darwinModules.nullclaw`.
+`homeManagerModules.nullclaw` runs the gateway the way upstream's
+`nullclaw service install` does, as your user service, but always from the
+installed package (`service install` writes the store path of whatever binary
+ran it, which goes stale on update and disappears on GC):
+
+- **Linux:** the systemd user unit `nullclaw.service` (`Restart=always`,
+  `WantedBy=default.target`, `stateDir`/.env loaded), logging to your journal:
+  `journalctl --user -u nullclaw`. Restart with
+  `systemctl --user restart nullclaw`.
+- **macOS:** the LaunchAgent `com.nullclaw.daemon` (`KeepAlive`), logging to
+  `stateDir`/logs/daemon.stdout.log and daemon.stderr.log, with launchd's
+  default PATH, like upstream's. Restart with
+  `launchctl kickstart -k gui/$(id -u)/com.nullclaw.daemon`.
 
 ```nix
 {
-  imports = [ inputs.xr3t.nixosModules.nullclaw ];  # or darwinModules.nullclaw
+  home-manager.users.alice = {
+    imports = [ inputs.xr3t.homeManagerModules.nullclaw ];
 
-  services.nullclaw = {
-    enable = true;
-    user = "alice";
-    # package = inputs.xr3t.packages.${system}.nullclaw-nightly;
+    services.nullclaw = {
+      enable = true;
+      # package = inputs.xr3t.packages.${system}.nullclaw-nightly;
+    };
   };
+
+  # NixOS: user services stop at logout and start at login, as upstream's do.
+  # For a gateway that runs from boot without a login:
+  users.users.alice.linger = true;
 }
 ```
 
-The gateway runs an autonomous agent that can execute commands as `user`,
+The gateway runs an autonomous agent that can execute commands as you,
 reachable from every configured channel. Review `autonomy` and each channel's
 `allow_from` before enabling it, and set them through `settings`: the agent
 can write to `stateDir`, `config.json` included, so it could widen what it
@@ -91,23 +104,26 @@ services.nullclaw.settings = {
 |---|---|---|
 | `services.nullclaw.enable` | `false` | Run the gateway and put `nullclaw` on `PATH`. |
 | `services.nullclaw.package` | `nullclaw` | Package to run; `nullclaw-nightly` works too. |
-| `services.nullclaw.user` | (required) | User it runs as; must be declared in `users.users`. |
-| `services.nullclaw.stateDir` | `<home>/.nullclaw` | `NULLCLAW_HOME`: `config.json`, `auth.json`, workspace. |
+| `services.nullclaw.stateDir` | `~/.nullclaw` | `NULLCLAW_HOME`: `config.json`, `auth.json`, workspace, logs. |
 | `services.nullclaw.settings` | `{ }` | Merged into `config.json` before every start (objects key by key, Nix wins; lists replaced), so the keys Nix sets always apply and the rest stays as `nullclaw onboard` wrote it. Not for tokens or API keys: the store is world-readable. |
-| `services.nullclaw.environmentFile` | `<stateDir>/.env` | `KEY=value` file for the gateway (e.g. API keys); skipped if missing. `null` disables it. |
-| `services.nullclaw.watchdog.enable` | `false` | Restart the gateway when a polling channel gets stuck (see below). NixOS only. |
+| `services.nullclaw.environmentFile` | `<stateDir>/.env` on Linux, `null` on macOS | `KEY=value` file for the gateway (e.g. API keys); skipped if missing. Upstream's Linux unit loads `.env`, its macOS agent doesn't. |
+| `services.nullclaw.watchdog.enable` | `false` | Restart the gateway when a polling channel gets stuck (see below). Not upstream's; Linux only. |
 | `services.nullclaw.watchdog.interval` | `"5min"` | How often the watchdog checks. |
-| `services.nullclaw.hardening.enable` | `false` | Filesystem read-only except `stateDir`, no privilege gain (see below). NixOS only. |
+| `services.nullclaw.hardening.enable` | `false` | Filesystem read-only except `stateDir`, no privilege gain (see below). Not upstream's; Linux only. |
 | `services.nullclaw.hardening.readWritePaths` | `[ ]` | Extra writable paths besides `stateDir`. |
 
-Run `nullclaw onboard` as `user` first, so `stateDir` exists. After editing
+Run `nullclaw onboard` first, so `stateDir` exists. After editing
 `config.json`, restart the service: `nullclaw config reload` only validates.
 
-- **NixOS:** systemd unit `nullclaw.service` (`Restart=always`), logs in the
-  journal: `journalctl -u nullclaw`. Restart with `sudo systemctl restart nullclaw`.
-- **macOS:** launchd daemon `com.nullclaw.gateway` running as `user`
-  (`KeepAlive`), logging to `<stateDir>/gateway.log`. It waits for the Nix store
-  at boot. Restart with `sudo launchctl kickstart -k system/com.nullclaw.gateway`.
+### Moving from the system service
+
+`nixosModules.nullclaw` and `darwinModules.nullclaw` used to run the gateway
+as a system service (`services.nullclaw.user`, launchd daemon
+`com.nullclaw.gateway`, log in `stateDir`/gateway.log). They now only stop a
+config that still sets `services.nullclaw` with a message pointing here. Move
+the options to the user's Home Manager config without `user`, and on NixOS set
+`users.users.<user>.linger = true` to keep it running from boot. On macOS the
+old daemon's plist goes away with the switch; `stateDir` stays as it is.
 
 ### Watchdog
 
@@ -117,15 +133,15 @@ joins the old thread. If the old thread is stuck in a request, the join never
 returns: the process stays up, the channel stays dead, and `Restart=always`
 never fires. Seen with Telegram in v2026.5.29.
 
-Opt in with `watchdog.enable = true`. On NixOS the `nullclaw-watchdog` timer
-then checks the log of the current run (`_SYSTEMD_INVOCATION_ID`) every
+Opt in with `watchdog.enable = true`. On Linux the `nullclaw-watchdog` user
+timer then checks the log of the current run (`_SYSTEMD_INVOCATION_ID`) every
 `watchdog.interval` and restarts `nullclaw.service` when it finds
 ` issue: polling thread stale`: the case that can hang. Restarting starts a
 new run with a clean log, so it does not loop on the same warning. A single
 ` issue: health check failed` is left alone: it shows up for a transient
 Telegram API error (seen during a long agent turn) and restarting then would
 cut off the reply in progress.
-Check what it did with `journalctl -u nullclaw-watchdog`.
+Check what it did with `journalctl --user -u nullclaw-watchdog`.
 
 ### Hardening
 
@@ -156,7 +172,7 @@ no sandbox; leave it off if the agent has to administer the machine (with
 - Don't use `nullclaw service install`: it writes a user service pointing at
   the current `/nix/store` path, which keeps running the old version after an
   upgrade and breaks once that path is garbage-collected. Use
-  `services.nullclaw` instead.
+  `homeManagerModules.nullclaw` instead, which installs the same service.
 
 ## Updates
 
@@ -167,11 +183,14 @@ Each package has an `update.sh`, run by the repo's daily workflow:
   notes and its hashes from the per-asset `.sha256` files. It exits cleanly
   when upstream is mid-upload.
 
-The workflow checks the flake after an update and commits to `main`.
-Consumers pick it up with `nix flake update xr3t`.
+Both run as agents with your access, so the workflow opens a pull request
+for their updates instead of committing to `main`. Consumers pick them up
+with `nix flake update xr3t`.
 
 ## Outputs
 
 - `packages.<system>.nullclaw`, `packages.<system>.nullclaw-nightly`
 - `pkgs.xr3t.nullclaw`, `pkgs.xr3t.nullclaw-nightly` through `overlays.default`
-- `nixosModules.nullclaw`, `darwinModules.nullclaw`: the `services.nullclaw` module
+- `homeManagerModules.nullclaw`: the `services.nullclaw` user service
+- `nixosModules.nullclaw`, `darwinModules.nullclaw`: only a pointer to the Home
+  Manager module, for configs that still set the old system service

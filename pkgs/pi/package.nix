@@ -79,7 +79,6 @@ stdenvNoCC.mkDerivation {
     makeWrapper ${nodejs}/bin/node "$out/bin/pi" \
       --set PI_PACKAGE_DIR "$out/lib/pi/node_modules/@earendil-works/pi-coding-agent" \
       --set-default PI_SKIP_VERSION_CHECK 1 \
-      --set-default PI_TELEMETRY 0 \
       --add-flags "$out/lib/pi/node_modules/@earendil-works/pi-coding-agent/dist/cli.js" \
       --suffix PATH : ${lib.makeBinPath [ nodejs ]} \
       --prefix PATH : ${

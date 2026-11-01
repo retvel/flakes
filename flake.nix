@@ -90,7 +90,6 @@
             self.nixosModules."1mcp"
             self.nixosModules.herdr
             self.nixosModules.littlesnitch
-            self.nixosModules.nullclaw
             self.nixosModules.rayfish
             {
               nixpkgs.hostPlatform = system;
@@ -109,12 +108,6 @@
                   settings.mcpServers = { };
                 };
                 littlesnitch.enable = true;
-                nullclaw = {
-                  enable = true;
-                  user = "alice";
-                  watchdog.enable = true;
-                  settings.autonomy.level = "supervised";
-                };
                 rayfish.enable = true;
               };
             }

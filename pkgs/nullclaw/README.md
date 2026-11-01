@@ -131,16 +131,16 @@ NullClaw restarts a stale channel thread itself (`<channel> issue: polling
 thread stale`, then `Restarting <channel> (attempt N)`), but that restart first
 joins the old thread. If the old thread is stuck in a request, the join never
 returns: the process stays up, the channel stays dead, and `Restart=always`
-never fires. Seen with Telegram in v2026.5.29.
+never fires.
 
 Opt in with `watchdog.enable = true`. On Linux the `nullclaw-watchdog` user
 timer then checks the log of the current run (`_SYSTEMD_INVOCATION_ID`) every
 `watchdog.interval` and restarts `nullclaw.service` when it finds
 ` issue: polling thread stale`: the case that can hang. Restarting starts a
 new run with a clean log, so it does not loop on the same warning. A single
-` issue: health check failed` is left alone: it shows up for a transient
-Telegram API error (seen during a long agent turn) and restarting then would
-cut off the reply in progress.
+` issue: health check failed` is left alone: a transient API error from the
+channel causes it too, and restarting then would cut off a reply in
+progress.
 Check what it did with `journalctl --user -u nullclaw-watchdog`.
 
 ### Hardening

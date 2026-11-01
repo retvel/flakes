@@ -64,7 +64,7 @@ nix.settings = {
     programs.hermes-agent.enable = true; # `hermes` on PATH, HERMES_HOME exported
     services.hermes-agent = {
       enable = true;
-      gateway.enable = true; # Telegram
+      gateway.enable = true; # the messaging gateway
     };
   };
 }
@@ -192,8 +192,8 @@ On a bump, check:
 - `hermes --version` shows the new version, not `0.0.0` (upstream may change
   the `version` argument of `nix/hermes-agent.nix`).
 - The groups still exist in upstream's `uv.lock`.
-- Module options used on the host still exist; build the host's `toplevel`
-  before updating its lock.
+- The module options a configuration sets still exist; build such a
+  configuration's `toplevel` before updating its lock.
 
 ## Outputs
 

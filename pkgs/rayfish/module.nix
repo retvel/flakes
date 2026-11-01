@@ -25,8 +25,8 @@ let
   isDarwin = options ? launchd;
 
   # `sudo ray-fix`: point the Rayfish DNS (200::53) and active peer routes back at
-  # the Rayfish utun, after Rayfish or another VPN (e.g. WARP) replaces a utun
-  # interface or address. System tools by absolute path: it runs under sudo.
+  # the Rayfish utun, after Rayfish or another VPN replaces a utun interface or
+  # address. System tools by absolute path: it runs under sudo.
   rayFix = pkgs.writeShellScriptBin "ray-fix" ''
     set -eu
     [ "$(id -u)" -eq 0 ] || { echo "ray-fix: run with sudo" >&2; exit 1; }
@@ -82,8 +82,8 @@ in
         go to another VPN's local resolver. On macOS this writes
         /etc/resolver/ray. On NixOS it enables systemd-resolved, and Rayfish's
         Magic DNS puts 200::53 and its .ray domains on rayfish0 through
-        resolved's D-Bus API. With another VPN owning /etc/resolv.conf (e.g.
-        WARP), Rayfish also adds 200::53 ahead of that VPN's resolver there.
+        resolved's D-Bus API. With another VPN owning /etc/resolv.conf, Rayfish
+        also adds 200::53 ahead of that VPN's resolver there.
       '';
     };
     rayFix.enable = mkOption {

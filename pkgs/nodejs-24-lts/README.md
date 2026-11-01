@@ -41,8 +41,8 @@ explicit update to consume a newer runtime.
 
 Linux system libraries and packaging tools come from nixpkgs. Check the dry run
 before building: no local compilation requires those dependencies to be cached.
-Install checks run Node, npm and npx. Darwin is tested locally; Linux is left to
-CI. Upstream prebuilt binaries can have stricter OS minimums than nixpkgs builds.
+Install checks run Node, npm and npx; CI runs them on every supported system.
+Upstream prebuilt binaries can have stricter OS minimums than nixpkgs builds.
 
 Sources checked 2026-10-22 for Node 24.22.1 and npm 12.2.1:
 

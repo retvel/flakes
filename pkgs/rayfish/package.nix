@@ -56,6 +56,7 @@ stdenvNoCC.mkDerivation {
     homepage = "https://rayfish.xyz";
     license = lib.licenses.mpl20;
     mainProgram = "ray";
+    sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     platforms = builtins.attrNames hashes;
   };
 }

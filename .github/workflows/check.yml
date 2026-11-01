@@ -32,11 +32,11 @@ jobs:
       # evaluation (hermes-agent's uv.lock).
       - name: Evaluate all systems, build this runner's packages
         run: nix flake check --all-systems -L
-      # Only hermes-agent's runtime closure, and only from main: a pull
-      # request's build never reaches the cache. Paths already on
-      # cache.nixos.org are skipped.
+      # Only hermes-agent's runtime closure, and only from main: builds of
+      # pull requests and update/<name> branches never reach the cache.
+      # Paths already on cache.nixos.org are skipped.
       - name: Push hermes-agent to Cachix
-        if: env.HAS_CACHIX == 'true' && github.event_name != 'pull_request' && runner.os == 'Linux' && runner.arch == 'X64'
+        if: env.HAS_CACHIX == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && runner.os == 'Linux' && runner.arch == 'X64'
         env:
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
         run: nix build .#hermes-agent --no-link --print-out-paths | cachix push retvel

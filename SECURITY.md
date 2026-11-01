@@ -43,9 +43,11 @@ fixes; there are no release branches.
 - **Updates.** New releases are committed to `main` automatically once
   `nix flake check` passes, without review, except for the packages in
   `REVIEW` (root daemons, network filters, agents), whose updates wait in a
-  pull request. See [LAYOUT.md](LAYOUT.md) for how the workflow runs.
+  pull request. The pinned nixpkgs, which every package's libraries and tools
+  come from, is bumped weekly, also through a pull request. See [LAYOUT.md](LAYOUT.md) for how the workflow runs.
 - **Binary cache.** CI pushes only `hermes-agent`'s closure, built from `main`,
-  to `retvel.cachix.org`; builds from pull requests never reach it. Trusting
+  to `retvel.cachix.org`; builds of pull requests and `update/<name>` branches
+  never reach it. Trusting
   that cache means trusting this repository's CI.
 
 ## CI hardening
@@ -77,7 +79,10 @@ live without. On macOS (launchd) there is no sandbox.
 
 Agents (`nullclaw`, `hermes-agent`, `codex`, `opencode`, `pi`) run commands a
 model chooses. Restrict who can reach them (e.g. nullclaw's `allow_from`) and
-what they may do before enabling them.
+what they may do before enabling them, and do it in Nix: an agent can edit a
+config file it can write, so put those limits in nullclaw's `settings`
+(merged back in on every start) or run Hermes in managed mode
+(`nixManagesConfig = true`).
 
 ## Secrets
 

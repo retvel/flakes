@@ -5,6 +5,7 @@
 # shipped untagged), and obdev.at drops old tarballs once a new one is out.
 set -euo pipefail
 cd "$(dirname "$0")"
+# shellcheck source-path=SCRIPTDIR source=../../lib/update.sh
 . ../../lib/update.sh
 
 base=https://obdev.at/downloads/littlesnitch-linux

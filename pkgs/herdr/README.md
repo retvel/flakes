@@ -31,7 +31,7 @@ Finder, the Dock or a desktop entry:
 |---|---|---|
 | `programs.herdr.enable` | `false` | Install the package and keep the app's updater off (below) |
 | `programs.herdr.package` | this flake's `herdr` | |
-| `programs.herdr.telemetry` | `false` | Allow the app's daily usage report; then Herdr's own `telemetry` setting decides |
+| `programs.herdr.telemetry` | `"off"` | Who decides on the app's daily usage report: `"off"` keeps it off; `"app"` leaves it to Herdr's own `telemetry` setting (on when absent) |
 
 ## Updates come through Nix
 
@@ -53,7 +53,7 @@ this repo's `Update herdr to …` commits, picked up by `nix flake update`.
 The app also sends a daily usage report upstream. By default it doesn't
 here: `bin/herdr-app` and the module set `HERDR_TELEMETRY=0`, which wins
 over Herdr's own `telemetry` setting (the same Finder/Dock caveat applies
-without the module). Set `programs.herdr.telemetry = true` to leave it to
+without the module). Set `programs.herdr.telemetry = "app"` to leave it to
 Herdr's setting instead (without the module, export `HERDR_TELEMETRY=1`).
 
 After enabling the module, quit and reopen Herdr so it starts with the
@@ -83,5 +83,5 @@ macOS). Upstream has no documented switch for the app's updater ("an
 installed app downloads them by itself"); this variable is the app's
 release-server override, not a promise to redistributions. If it goes, the
 app updates itself again. Telemetry does have one: `"telemetry": false` in
-`~/.config/herdr-app/settings.json`, which `programs.herdr.telemetry = true`
+`~/.config/herdr-app/settings.json`, which `programs.herdr.telemetry = "app"`
 leaves in charge.

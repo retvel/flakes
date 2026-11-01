@@ -44,16 +44,23 @@ fixes; there are no release branches.
   `nix flake check` passes, without review, except for the packages in
   `REVIEW` (root daemons, network filters, agents), whose updates wait in a
   pull request. The pinned nixpkgs, which every package's libraries and tools
-  come from, is bumped weekly, also through a pull request. See [LAYOUT.md](LAYOUT.md) for how the workflow runs.
+  come from, is bumped weekly, also through a pull request. See
+  [LAYOUT.md](LAYOUT.md) for how the workflow runs.
+- **Dependencies follow upstream's lock.** A package assembled from
+  upstream's own lockfile installs exactly what that lock names, advisories
+  included; they close when upstream ships a new lock and the next update
+  picks it up. Nothing is patched here.
 - **Updates and telemetry go through Nix.** Packages run as upstream ships
-  them, except that their self-update and update checks are off (updates come
-  from this flake) and their telemetry is off by default through upstream's
-  own switch (`PI_TELEMETRY`, `HERDR_TELEMETRY`, codex's `analytics`), which
-  you can set back.
+  them, except that self-updates, update checks and telemetry are off wherever
+  the package allows it: through upstream's own switch where there is one,
+  else an undocumented one (which may stop working on a bump), else a guard
+  that refuses the update command. Update checks
+  and telemetry are only defaults, which your own config can set back; each
+  package's README says what is off and how. An updater built into a signed
+  app bundle can only be turned off in the app.
 - **Binary cache.** CI pushes only `hermes-agent`'s closure, built from `main`,
   to `ret.cachix.org`; builds of pull requests and `update/<name>` branches
-  never reach it. Trusting
-  that cache means trusting this repository's CI.
+  never reach it. Trusting that cache means trusting this repository's CI.
 
 ## CI hardening
 

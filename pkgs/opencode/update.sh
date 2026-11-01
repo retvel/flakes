@@ -5,6 +5,7 @@
 # downloaded. Needs curl and jq.
 set -euo pipefail
 cd "$(dirname "$0")"
+# shellcheck source-path=SCRIPTDIR source=../../lib/update.sh
 . ../../lib/update.sh
 
 version="$(curl -fsS https://registry.npmjs.org/@opencode%2fcli/latest | jq -r '.version // empty')"

@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared helpers for pkgs/*/update.sh. Source it after `cd "$(dirname "$0")"`:
 #   . ../../lib/update.sh
 # Needs jq and nix, and gh for gh_latest.

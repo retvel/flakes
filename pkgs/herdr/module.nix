@@ -13,9 +13,10 @@ let
   cfg = config.programs.herdr;
   isDarwin = options ? launchd;
   releases = "file://${cfg.package}/share/herdr/releases";
-  # "0" turns the app's usage report off; "1" only keeps herdr-app's own
-  # default (0) out of the way, so Herdr's setting decides.
-  telemetry = if cfg.telemetry then "1" else "0";
+  # "0" turns the app's usage report off whatever Herdr's settings say; "1"
+  # only keeps herdr-app's own default (0) out of the way, so Herdr's setting
+  # decides.
+  telemetry = if cfg.telemetry == "off" then "0" else "1";
 in
 {
   options.programs.herdr = {
@@ -27,12 +28,21 @@ in
       description = "Herdr package to install.";
     };
     telemetry = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
+      # true/false from earlier versions still work: true is "app", false "off".
+      type = lib.types.coercedTo lib.types.bool (b: if b then "app" else "off") (
+        lib.types.enum [
+          "off"
+          "app"
+        ]
+      );
+      default = "off";
+      example = "app";
       description = ''
-        Let the app send its daily usage report upstream. false sets
-        HERDR_TELEMETRY=0, which turns it off whatever Herdr's settings say;
-        true leaves it to Herdr's own `telemetry` setting.
+        Who decides whether the app sends its daily usage report upstream.
+        "off": nobody, it is off (HERDR_TELEMETRY=0, which wins over Herdr's
+        settings). "app": Herdr's own `telemetry` setting
+        (~/.config/herdr-app/settings.json, or Settings, Privacy), which is
+        on when absent.
       '';
     };
   };

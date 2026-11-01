@@ -4,14 +4,10 @@
   stdenv,
   fetchurl,
   autoPatchelfHook,
-  # false (default): the npm that Node's release ships, as upstream does.
-  # true: npm's latest release, pinned in hashes.json instead.
-  pinnedNpm ? false,
 }:
 
 let
   versionData = lib.importJSON ./hashes.json;
-  npmVersion = if pinnedNpm then versionData.npm.version else versionData.bundledNpm;
   npmSrc = fetchurl {
     url = "https://registry.npmjs.org/npm/-/npm-${versionData.npm.version}.tgz";
     hash = versionData.npm.hash;
@@ -43,15 +39,11 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     mkdir -p "$out"
     cp -R . "$out/"
-  ''
-  + lib.optionalString pinnedNpm ''
     # Replace bundled npm with the independently pinned official npm release.
     # npm's tarball includes its dependencies; no npm install/scripts are needed.
     rm -rf "$out/lib/node_modules/npm"
     mkdir -p "$out/lib/node_modules/npm"
     tar -xzf ${npmSrc} --strip-components=1 -C "$out/lib/node_modules/npm"
-  ''
-  + ''
     # npm/npx use upstream's env-node shebang. Pin those JS launchers to this
     # runtime without modifying the signed Mach-O Node executable on macOS.
     for script in "$out/lib/node_modules/npm/bin/npm-cli.js" "$out/lib/node_modules/npm/bin/npx-cli.js"; do
@@ -65,13 +57,13 @@ stdenvNoCC.mkDerivation {
   installCheckPhase = ''
     runHook preInstallCheck
     test "$("$out/bin/node" --version)" = "v$version"
-    test "$("$out/bin/npm" --version)" = "${npmVersion}"
-    test "$("$out/bin/npx" --version)" = "${npmVersion}"
+    test "$("$out/bin/npm" --version)" = "${versionData.npm.version}"
+    test "$("$out/bin/npx" --version)" = "${versionData.npm.version}"
     runHook postInstallCheck
   '';
 
   meta = {
-    description = "Official prebuilt Node.js 24 LTS${lib.optionalString pinnedNpm ", with npm's latest release"}";
+    description = "Official prebuilt Node.js 24 LTS with independently pinned latest compatible npm";
     homepage = "https://nodejs.org";
     license = lib.licenses.mit;
     mainProgram = "node";

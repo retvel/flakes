@@ -1,16 +1,11 @@
 # Node.js 24 LTS
 
-Official prebuilt [Node.js](https://nodejs.org) 24 LTS binaries, as
-nodejs.org releases them, with the npm (and npx) that release ships. No
-source compilation or npm install/lifecycle scripts: Nix extracts the
-archive, pins npm/npx JavaScript shebangs to this runtime, and patches Linux
-dynamic-library paths. The signed macOS Node executable is not modified or
-re-signed.
-
-For npm's latest release instead of the bundled one, override the package:
-`nodejs-24-lts.override { pinnedNpm = true; }`. It replaces the bundled npm
-with the official npm tarball pinned in `hashes.json` (`npm`), whose Node
-engine range the updater checks against this runtime.
+Official prebuilt [Node.js](https://nodejs.org) 24 LTS binaries with an
+independently pinned npm release (including npx) from the official npm registry.
+The bundled npm is replaced during assembly. No source compilation or npm
+install/lifecycle scripts: Nix extracts both archives, pins npm/npx JavaScript
+shebangs to this runtime, and patches Linux dynamic-library paths.
+The signed macOS Node executable is not modified or re-signed.
 
 ```sh
 nix run github:xr3t/flakes#nodejs-24-lts -- --version
@@ -29,19 +24,17 @@ nix build --dry-run .#nodejs-24-lts .#pi
 nix build .#nodejs-24-lts .#pi
 ```
 
-Python 3 standard library only, plus `gpgv`. The updater selects the newest
-stable Node 24 release marked LTS in the official release index, records the
-npm it ships (`bundledNpm`), and pins archive hashes from its SHA-256 manifest,
-which must carry a good signature by a Node release key (the keyring comes
-from github.com/nodejs/release-keys, a second source). It also pins npm's
-`latest` release and SHA-512 integrity metadata for `pinnedNpm`, checking that
-its Node engine range supports this runtime.
+Python 3 standard library only, plus `gpgv`. The updater selects the newest stable Node 24
+release marked LTS in the official release index and pins archive hashes from
+its HTTPS SHA-256 manifest. It also pins npm's `latest` release and SHA-512
+integrity metadata, checking that its Node engine range supports this runtime.
 If latest npm becomes incompatible or uses an unfamiliar engine-range syntax,
 the updater fails instead of silently selecting an unverified version. Both
 Node and npm are checked even when the Node version has not changed.
 
-It does not verify npm's publisher signatures. Builds verify downloaded
-archives against pinned hashes.
+The Node manifest must carry a good signature by a Node release key (keyring
+from github.com/nodejs/release-keys); npm's publisher signatures are not
+verified. Builds verify downloaded archives against pinned hashes.
 Latest does not imply vulnerability-free; advisories need separate review.
 No automatic major-version migration. Downstream flake locks still require an
 explicit update to consume a newer runtime.

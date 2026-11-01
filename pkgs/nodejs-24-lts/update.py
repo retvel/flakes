@@ -45,15 +45,11 @@ def verified_checksums(version):
 
 def main():
     releases = json.loads(fetch("https://nodejs.org/dist/index.json"))
-    lts = {
-        r["version"][1:]: r for r in releases
+    versions = [
+        r["version"][1:] for r in releases
         if re.fullmatch(r"v24\.\d+\.\d+", r["version"]) and r["lts"]
-    }
-    version = max(lts, key=lambda v: tuple(map(int, v.split("."))))
-    # The npm Node's release ships (the package's default).
-    bundled_npm = lts[version]["npm"]
-    if not re.fullmatch(r"\d+\.\d+\.\d+", bundled_npm):
-        raise ValueError(f"Unexpected bundled npm version {bundled_npm!r}")
+    ]
+    version = max(versions, key=lambda v: tuple(map(int, v.split("."))))
     path = ROOT / "hashes.json"
     current_data = json.loads(path.read_text()) if path.exists() else {}
     current = current_data.get("version")
@@ -78,7 +74,7 @@ def main():
     if npm["dist"]["tarball"] != expected_url:
         raise ValueError("Unexpected npm tarball URL")
     npm_pin = {"version": npm["version"], "hash": npm["dist"]["integrity"]}
-    if current == version and current_data.get("npm") == npm_pin and current_data.get("bundledNpm") == bundled_npm:
+    if current == version and current_data.get("npm") == npm_pin:
         print(f"nodejs-24-lts: Node {version}, npm {npm['version']} are latest")
         return
 
@@ -93,7 +89,7 @@ def main():
         system: sums[f"node-v{version}-{target}.tar.xz"]
         for system, target in TARGETS.items()
     }
-    path.write_text(json.dumps({"version": version, "bundledNpm": bundled_npm, "hashes": hashes, "npm": npm_pin}, indent=2) + "\n")
+    path.write_text(json.dumps({"version": version, "hashes": hashes, "npm": npm_pin}, indent=2) + "\n")
     print(f"nodejs-24-lts: {current or 'new'} -> Node {version}, npm {npm['version']}")
 
 

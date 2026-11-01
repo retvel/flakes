@@ -12,8 +12,19 @@ self:
 # restart on exit, NULLCLAW_HOME, optional .env), but pointed at the Nix
 # package instead of the store path of whatever binary ran `service install`,
 # which goes stale on update and disappears on GC.
-with lib;
 let
+  inherit (lib)
+    concatStringsSep
+    literalExpression
+    mkEnableOption
+    mkIf
+    mkMerge
+    mkOption
+    optional
+    optionalAttrs
+    optionalString
+    types
+    ;
   cfg = config.services.nullclaw;
   isDarwin = options ? launchd;
   home = config.users.users.${cfg.user}.home;
@@ -73,7 +84,7 @@ in
     hardening = {
       enable = mkOption {
         type = types.bool;
-        default = false;
+        default = true;
         description = ''
           Confine the gateway and every command its agent runs with systemd
           sandboxing: the whole filesystem read-only except `stateDir` (and a
@@ -82,7 +93,8 @@ in
           does nothing useful on NixOS (Landlock is a stub upstream, and
           firejail/bubblewrap/docker hide the host), so this is the
           enforcement. Network, processes and devices stay visible, so the
-          agent can still monitor the machine. NixOS only.
+          agent can still monitor the machine. On by default: the agent runs
+          commands chosen by a model and reachable from chat. NixOS only.
         '';
       };
       readWritePaths = mkOption {
@@ -140,80 +152,80 @@ in
     })
 
     (optionalAttrs (!isDarwin) {
-      systemd.services.nullclaw = {
-        description = "NullClaw gateway";
-        wantedBy = [ "multi-user.target" ];
-        wants = [ "network-online.target" ];
-        after = [ "network-online.target" ];
-        # The agent runs tools (git, shell): the same programs as a login shell.
-        path = [
-          "/run/wrappers"
-          "/etc/profiles/per-user/${cfg.user}"
-          "/run/current-system/sw"
-        ];
-        environment = {
-          HOME = home;
-          NULLCLAW_HOME = cfg.stateDir;
-        };
-        serviceConfig = {
-          User = cfg.user;
-          Group = config.users.users.${cfg.user}.group;
-          WorkingDirectory = home;
-          ExecStart = "${cfg.package}/bin/nullclaw gateway";
-          EnvironmentFile = optional (cfg.environmentFile != null) "-${cfg.environmentFile}";
-          Restart = "always";
-          RestartSec = 3;
-        }
-        // optionalAttrs cfg.hardening.enable {
-          # Read everything, write only stateDir. No PrivateNetwork,
-          # ProtectProc=invisible or PrivateDevices: those would hide the
-          # network, other processes and block devices from the agent.
-          # Recheck nullclaw/nullclaw#882 (Landlock) when bumping nullclaw.
-          ProtectSystem = "strict";
-          ProtectHome = "read-only";
-          ReadWritePaths = [ cfg.stateDir ] ++ cfg.hardening.readWritePaths;
-          PrivateTmp = true;
-          NoNewPrivileges = true;
-          RestrictSUIDSGID = true;
-          ProtectKernelTunables = true;
-          ProtectKernelModules = true;
-          ProtectKernelLogs = true;
-          ProtectControlGroups = true;
-          ProtectClock = true;
-          ProtectHostname = true;
-          LockPersonality = true;
-          RestrictRealtime = true;
-          RestrictNamespaces = true;
-        };
-      };
+      systemd = {
+        services = {
+          nullclaw = {
+            description = "NullClaw gateway";
+            wantedBy = [ "multi-user.target" ];
+            wants = [ "network-online.target" ];
+            after = [ "network-online.target" ];
+            # The agent runs tools (git, shell): the same programs as a login shell.
+            path = [
+              "/run/wrappers"
+              "/etc/profiles/per-user/${cfg.user}"
+              "/run/current-system/sw"
+            ];
+            environment = {
+              HOME = home;
+              NULLCLAW_HOME = cfg.stateDir;
+            };
+            serviceConfig = {
+              User = cfg.user;
+              Group = config.users.users.${cfg.user}.group;
+              WorkingDirectory = home;
+              ExecStart = "${cfg.package}/bin/nullclaw gateway";
+              EnvironmentFile = optional (cfg.environmentFile != null) "-${cfg.environmentFile}";
+              Restart = "always";
+              RestartSec = 3;
+            }
+            # Read everything, write only stateDir. No PrivateNetwork,
+            # ProtectProc=invisible or PrivateDevices: those would hide the
+            # network, other processes and block devices from the agent.
+            # Recheck nullclaw/nullclaw#882 (Landlock) when bumping nullclaw.
+            // optionalAttrs cfg.hardening.enable (
+              import ../../lib/hardening.nix
+              // {
+                ProtectSystem = "strict";
+                ProtectHome = "read-only";
+                ReadWritePaths = [ cfg.stateDir ] ++ cfg.hardening.readWritePaths;
+                PrivateTmp = true;
+                ProtectKernelTunables = true;
+                ProtectKernelModules = true;
+                ProtectHostname = true;
+                RestrictNamespaces = true;
+              }
+            );
+          };
 
-      # Only this run's log (by invocation ID), so the restart it triggers
-      # starts clean and cannot loop on an old warning. The string comes from
-      # upstream's src/channel_manager.zig: recheck it when bumping nullclaw.
-      # Don't match ` issue: health check failed`: it is transient.
-      systemd.services.nullclaw-watchdog = mkIf cfg.watchdog.enable {
-        description = "Restart NullClaw when a channel is stuck";
-        serviceConfig.Type = "oneshot";
-        script = ''
-          systemctl is-active --quiet nullclaw.service || exit 0
-          id=$(systemctl show --property=InvocationID --value nullclaw.service)
-          [ -n "$id" ] || exit 0
-          if journalctl --quiet --output=cat _SYSTEMD_INVOCATION_ID="$id" \
-              | grep -q ' issue: polling thread stale'; then
-            echo "nullclaw: a channel is stuck, restarting nullclaw.service"
-            systemctl restart nullclaw.service
-          fi
-        '';
-        path = [
-          config.systemd.package
-          pkgs.gnugrep
-        ];
-      };
-      systemd.timers.nullclaw-watchdog = mkIf cfg.watchdog.enable {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = cfg.watchdog.interval;
-          OnUnitActiveSec = cfg.watchdog.interval;
+          # Only this run's log (by invocation ID), so the restart it triggers
+          # starts clean and cannot loop on an old warning. The string comes from
+          # upstream's src/channel_manager.zig: recheck it when bumping nullclaw.
+          # Don't match ` issue: health check failed`: it is transient.
+          nullclaw-watchdog = mkIf cfg.watchdog.enable {
+            description = "Restart NullClaw when a channel is stuck";
+            serviceConfig.Type = "oneshot";
+            script = ''
+              systemctl is-active --quiet nullclaw.service || exit 0
+              id=$(systemctl show --property=InvocationID --value nullclaw.service)
+              [ -n "$id" ] || exit 0
+              if journalctl --quiet --output=cat _SYSTEMD_INVOCATION_ID="$id" \
+                  | grep -q ' issue: polling thread stale'; then
+                echo "nullclaw: a channel is stuck, restarting nullclaw.service"
+                systemctl restart nullclaw.service
+              fi
+            '';
+            path = [
+              config.systemd.package
+              pkgs.gnugrep
+            ];
+          };
+        };
+        timers.nullclaw-watchdog = mkIf cfg.watchdog.enable {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = cfg.watchdog.interval;
+            OnUnitActiveSec = cfg.watchdog.interval;
+          };
         };
       };
     })

@@ -73,6 +73,42 @@
         lib.genAttrs (builtins.filter (name: builtins.pathExists ./pkgs/${name}/${file}) packageNames) (
           name: import ./pkgs/${name}/${file} self
         );
+      # Used by checks.<system>.nixos-modules. hermes-agent is left out: it is
+      # upstream's module, and evaluating it fetches upstream's flake.
+      nixosModulesTest =
+        system:
+        nixpkgs.lib.nixosSystem {
+          modules = [
+            self.nixosModules."1mcp"
+            self.nixosModules.herdr
+            self.nixosModules.littlesnitch
+            self.nixosModules.nullclaw
+            self.nixosModules.rayfish
+            {
+              nixpkgs.hostPlatform = system;
+              boot.loader.grub.enable = false;
+              fileSystems."/" = {
+                device = "none";
+                fsType = "tmpfs";
+              };
+              system.stateVersion = "25.11";
+              users.users.alice.isNormalUser = true;
+              services."1mcp" = {
+                enable = true;
+                user = "alice";
+                settings.mcpServers = { };
+              };
+              programs.herdr.enable = true;
+              services.littlesnitch.enable = true;
+              services.nullclaw = {
+                enable = true;
+                user = "alice";
+                watchdog.enable = true;
+              };
+              services.rayfish.enable = true;
+            }
+          ];
+        };
     in
     {
       packages = eachSystem (
@@ -97,6 +133,13 @@
             find ${self} -name '*.nix' -exec nixfmt --check {} +
             touch "$out"
           '';
+        }
+        // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+          # A NixOS system with every NixOS module here enabled, evaluated
+          # (not built): its drv path is the check's only content.
+          nixos-modules = pkgs.writeText "nixos-modules" (
+            builtins.unsafeDiscardStringContext (nixosModulesTest system).config.system.build.toplevel.drvPath
+          );
         }
       );
 

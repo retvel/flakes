@@ -1,4 +1,11 @@
-{ lib, stdenvNoCC, fetchurl, autoPatchelfHook, glibc, libgcc }:
+{
+  lib,
+  stdenvNoCC,
+  fetchurl,
+  autoPatchelfHook,
+  glibc,
+  libgcc,
+}:
 
 let
   # Version and per-system hashes live in hashes.json so update.sh can rewrite
@@ -29,7 +36,10 @@ stdenvNoCC.mkDerivation {
   dontFixup = !isLinux;
 
   nativeBuildInputs = lib.optional isLinux autoPatchelfHook;
-  buildInputs = lib.optionals isLinux [ glibc libgcc ];
+  buildInputs = lib.optionals isLinux [
+    glibc
+    libgcc
+  ];
   runtimeDependencies = lib.optionals isLinux [ libgcc ];
 
   installPhase = ''

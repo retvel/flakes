@@ -1,5 +1,11 @@
 self:
-{ config, options, lib, pkgs, ... }:
+{
+  config,
+  options,
+  lib,
+  pkgs,
+  ...
+}:
 
 # One module for both nix-darwin (launchd) and NixOS (systemd), like rayfish.
 # Runs what `nullclaw service install` sets up upstream (`nullclaw gateway`,
@@ -11,7 +17,8 @@ let
   cfg = config.services.nullclaw;
   isDarwin = options ? launchd;
   home = config.users.users.${cfg.user}.home;
-in {
+in
+{
   options.services.nullclaw = {
     enable = mkEnableOption "the NullClaw gateway (runs an autonomous AI agent as `user`)";
     package = mkOption {
@@ -197,7 +204,10 @@ in {
             systemctl restart nullclaw.service
           fi
         '';
-        path = [ config.systemd.package pkgs.gnugrep ];
+        path = [
+          config.systemd.package
+          pkgs.gnugrep
+        ];
       };
       systemd.timers.nullclaw-watchdog = mkIf cfg.watchdog.enable {
         wantedBy = [ "timers.target" ];

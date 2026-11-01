@@ -45,10 +45,25 @@
         in
         lib.genAttrs packageNames (name: scope.${name});
 
+      # Packages whose evaluation fetches another flake (Hermes; cua-driver
+      # reads Hermes' lock). Their platforms are given here, matching their
+      # meta.platforms, so listing packages.<system> or using any module never
+      # fetches Hermes on other systems.
+      fixedPlatforms = {
+        hermes-agent = [ "x86_64-linux" ];
+        cua-driver = [
+          "aarch64-linux"
+          "x86_64-linux"
+        ];
+      };
+
       # Only expose packages that build on the given system.
       available =
-        system: pkg:
-        lib.meta.availableOn pkgsFor.${system}.stdenv.hostPlatform pkg && !(pkg.meta.broken or false);
+        system: name: pkg:
+        if fixedPlatforms ? ${name} then
+          builtins.elem system fixedPlatforms.${name}
+        else
+          lib.meta.availableOn pkgsFor.${system}.stdenv.hostPlatform pkg && !(pkg.meta.broken or false);
 
       # Service modules, by file name in pkgs/<name>/: module.nix is exported for
       # both nix-darwin and NixOS, darwin-module.nix / nixos-module.nix for one,
@@ -61,7 +76,7 @@
     in
     {
       packages = eachSystem (
-        system: lib.filterAttrs (_: available system) (mkPackagesFor pkgsFor.${system})
+        system: lib.filterAttrs (available system) (mkPackagesFor pkgsFor.${system})
       );
 
       overlays.default = import ./overlays { inherit mkPackagesFor; };
@@ -70,7 +85,20 @@
       nixosModules = modulesFrom "module.nix" // modulesFrom "nixos-module.nix";
       homeManagerModules = modulesFrom "home-module.nix";
 
-      checks = self.packages;
+      # Every package, and every .nix file formatted with `nix fmt`.
+      checks = eachSystem (
+        system:
+        let
+          pkgs = pkgsFor.${system};
+        in
+        self.packages.${system}
+        // {
+          formatting = pkgs.runCommand "formatting" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
+            find ${self} -name '*.nix' -exec nixfmt --check {} +
+            touch "$out"
+          '';
+        }
+      );
 
       formatter = eachSystem (system: pkgsFor.${system}.nixfmt);
     };

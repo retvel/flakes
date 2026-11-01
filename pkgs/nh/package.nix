@@ -25,8 +25,10 @@ stdenvNoCC.mkDerivation {
   dontStrip = true;
   # Preserve the upstream Mach-O binary; only Linux needs loader patching.
   dontFixup = stdenvNoCC.hostPlatform.isDarwin;
-  nativeBuildInputs = [ makeWrapper ]
-    ++ lib.optionals stdenvNoCC.hostPlatform.isLinux [ autoPatchelfHook ];
+  nativeBuildInputs = [
+    makeWrapper
+  ]
+  ++ lib.optionals stdenvNoCC.hostPlatform.isLinux [ autoPatchelfHook ];
   buildInputs = lib.optionals stdenvNoCC.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
 
   installPhase = ''

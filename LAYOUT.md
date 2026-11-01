@@ -2,7 +2,7 @@
 
 | Path | Role |
 |---|---|
-| `flake.nix` | Discovers `pkgs/*/package.nix` and the module files; builds all packages in one `makeScope` so they can depend on each other by argument name; filters `packages.<system>` with `lib.meta.availableOn`. |
+| `flake.nix` | Discovers `pkgs/*/package.nix` and the module files; builds all packages in one `makeScope` so they can depend on each other by argument name; filters `packages.<system>` with `lib.meta.availableOn`, except for the packages in `fixedPlatforms` (they fetch Hermes' flake when evaluated). `checks` adds `formatting` (`nixfmt --check`). |
 | `overlays/default.nix` | `pkgs.retvel.<name>`, built against the consumer's nixpkgs. |
 | `pkgs/<name>/package.nix` | The derivation. Read `version`/hashes from `hashes.json` for prebuilt binaries. |
 | `pkgs/<name>/hashes.json` | `{ "version": ..., "hashes": { "<key>": "sha256-..." } }`, written by `update.sh`. Keys are whatever the package looks up (usually the system). Exception: `hermes-agent` pins an upstream flake as `{ version, rev, narHash }`, and `cua-driver` has none: it reads version, URL and hash from that Hermes commit's `pm/lock.json`. |

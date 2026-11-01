@@ -58,12 +58,14 @@ in
     # capability bounding set and sandboxing all come from the tarball, so a
     # bump picks up upstream's changes. State, rules and web UI overrides
     # live in /var/lib/littlesnitch (the daemon creates it).
-    systemd.packages = [ cfg.package ];
-    systemd.services.littlesnitch.wantedBy = [ "multi-user.target" ];
+    systemd = {
+      packages = [ cfg.package ];
+      services.littlesnitch.wantedBy = [ "multi-user.target" ];
 
-    systemd.tmpfiles.rules = lib.optionals (!cfg.updateCheck) [
-      "d /var/lib/littlesnitch/override/config - - - -"
-      "L+ /var/lib/littlesnitch/override/config/software_update.toml - - - - ${softwareUpdate}"
-    ];
+      tmpfiles.rules = lib.optionals (!cfg.updateCheck) [
+        "d /var/lib/littlesnitch/override/config - - - -"
+        "L+ /var/lib/littlesnitch/override/config/software_update.toml - - - - ${softwareUpdate}"
+      ];
+    };
   };
 }

@@ -48,7 +48,9 @@ stdenvNoCC.mkDerivation {
   ];
 
   installPhase = ''
+    runHook preInstall
     install -Dm755 "1mcp-${asset}" "$out/bin/1mcp"
+    runHook postInstall
   '';
 
   meta = {

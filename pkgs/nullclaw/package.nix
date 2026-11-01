@@ -37,7 +37,9 @@ stdenvNoCC.mkDerivation {
   dontFixup = true;
 
   installPhase = ''
+    runHook preInstall
     install -Dm755 "$src" "$out/bin/nullclaw"
+    runHook postInstall
   '';
 
   meta = {

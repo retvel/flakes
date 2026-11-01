@@ -24,7 +24,7 @@ let
       aarch64-linux = "linux-arm64";
       x86_64-linux = "linux-x64";
     }
-    .${stdenv.hostPlatform.system};
+    .${stdenv.hostPlatform.system} or (throw "pi: unsupported system ${stdenv.hostPlatform.system}");
   nativePlatform = if stdenv.hostPlatform.isDarwin then "darwin" else "linux";
   nativeFile = "${nativePlatform}-platform${lib.optionalString stdenv.hostPlatform.isLinux "-x11"}.node";
 in

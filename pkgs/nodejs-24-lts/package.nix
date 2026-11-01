@@ -18,7 +18,8 @@ let
       aarch64-linux = "linux-arm64";
       x86_64-linux = "linux-x64";
     }
-    .${stdenv.hostPlatform.system};
+    .${stdenv.hostPlatform.system}
+      or (throw "nodejs-24-lts: unsupported system ${stdenv.hostPlatform.system}");
 in
 stdenvNoCC.mkDerivation {
   pname = "nodejs-24-lts";

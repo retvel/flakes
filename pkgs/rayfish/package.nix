@@ -43,10 +43,12 @@ stdenvNoCC.mkDerivation {
   runtimeDependencies = lib.optionals isLinux [ libgcc ];
 
   installPhase = ''
+    runHook preInstall
     install -Dm755 "$src" "$out/libexec/rayfish/ray"
     install -Dm755 ${./ray-guard.sh} "$out/bin/ray"
     substituteInPlace "$out/bin/ray" \
       --replace-fail '@REAL@' "$out/libexec/rayfish/ray"
+    runHook postInstall
   '';
 
   meta = {

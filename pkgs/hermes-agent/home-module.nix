@@ -50,13 +50,20 @@ let
 
   # What the running gateway was started with: the drop-in (and with it the
   # package) and what each switch writes to config.yaml and .env, which
-  # Hermes only reads at start.
+  # Hermes only reads at start. Only a hash of them goes to the store, so
+  # values in `environment` are not copied there again.
   gatewayStamp = pkgs.writeText "hermes-gateway-stamp" (
-    builtins.toJSON {
-      dropIn = "${gatewayDropIn}";
-      inherit (cfg) settings environment environmentFiles;
-    }
+    builtins.hashString "sha256" (
+      builtins.toJSON {
+        dropIn = "${gatewayDropIn}";
+        inherit (cfg) settings environment environmentFiles;
+      }
+    )
   );
+
+  # A value inside Environment="...": systemd reads % as a specifier and
+  # backslash escapes, so neither may pass through as is.
+  unitValue = lib.replaceStrings [ "%" "\\" "\"" "\n" ] [ "%%" "\\\\" "\\\"" "\\n" ];
   unitCfg = cfg.hermesGatewayUnit;
   unitDir = "${config.xdg.configHome}/systemd/user";
 
@@ -71,7 +78,7 @@ let
         "ExecStart="
         "ExecStart=${hermes} gateway run"
       ]
-      ++ lib.mapAttrsToList (k: v: "Environment=\"${k}=${v}\"") (
+      ++ lib.mapAttrsToList (k: v: "Environment=\"${unitValue "${k}=${v}"}\"") (
         {
           HERMES_MANAGED = "false";
           PATH = userPath;
@@ -129,7 +136,7 @@ in
       # Without a git checkout Hermes follows upstream's main branch and keeps
       # reporting an update. Compare with the latest stable release instead.
       home.activation.hermesAgentStableChannel = lib.hm.dag.entryAfter [ "hermesAgentSetup" ] ''
-        $DRY_RUN_CMD env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} \
+        run env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} \
           ${(common.effectivePackage cfg).hermesVenv}/bin/python3 -I ${./stable-channel.py} \
           ${lib.escapeShellArg "${cfg.hermesHome}/config.yaml"}
       '';
@@ -224,12 +231,12 @@ in
             # loginctl) by name too.
             export PATH=${lib.escapeShellArg (dirOf config.systemd.user.systemctlPath)}:"$PATH"
             if [ ! -e ${lib.escapeShellArg "${unitDir}/hermes-gateway.service"} ]; then
-              $DRY_RUN_CMD systemctl --user daemon-reload
-              $DRY_RUN_CMD env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} ${hermes} gateway install --start-now --start-on-login
-              $DRY_RUN_CMD ln -sfn ${gatewayStamp} ${stamp}
+              run systemctl --user daemon-reload
+              run env HERMES_HOME=${lib.escapeShellArg cfg.hermesHome} ${hermes} gateway install --start-now --start-on-login
+              run ln -sfn ${gatewayStamp} ${stamp}
             elif [ "$(readlink ${stamp} 2>/dev/null)" != ${gatewayStamp} ]; then
-              $DRY_RUN_CMD systemctl --user daemon-reload
-              $DRY_RUN_CMD systemctl --user restart --no-block hermes-gateway-refresh
+              run systemctl --user daemon-reload
+              run systemctl --user restart --no-block hermes-gateway-refresh
             fi
           '';
     })
@@ -237,7 +244,7 @@ in
     (lib.mkIf (cfg.enable && !cfg.nixManagesConfig) {
       # Upstream's activation writes the marker that turns on managed mode.
       home.activation.hermesAgentUnmanaged = lib.hm.dag.entryAfter [ "hermesAgentSetup" ] ''
-        $DRY_RUN_CMD rm -f ${lib.escapeShellArg "${cfg.hermesHome}/.managed"}
+        run rm -f ${lib.escapeShellArg "${cfg.hermesHome}/.managed"}
       '';
 
       systemd.user.services = lib.mkIf pkgs.stdenv.hostPlatform.isLinux (

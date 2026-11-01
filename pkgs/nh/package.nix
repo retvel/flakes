@@ -39,6 +39,13 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    test "$("$out/bin/nh" --version)" = "nh $version"
+    runHook postInstallCheck
+  '';
+
   meta = {
     description = "Yet another Nix CLI helper";
     homepage = "https://github.com/nix-community/nh";

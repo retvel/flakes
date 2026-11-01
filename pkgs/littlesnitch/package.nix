@@ -48,6 +48,14 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
+  # Run as is: the binary is static and unpatched.
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    "$out/bin/littlesnitch" --version | grep -qF "Version: $version"
+    runHook postInstallCheck
+  '';
+
   meta = {
     description = "Network monitor that shows and filters which programs connect where (Linux, eBPF)";
     homepage = "https://obdev.at/products/littlesnitch-linux/";

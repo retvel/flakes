@@ -62,6 +62,19 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
+  # Every library it links resolves (autoPatchelf): ld.so lists them
+  # without running the program, which needs a desktop.
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    for exe in cua-driver cua-cursor-theme; do
+      if LD_TRACE_LOADED_OBJECTS=1 "$out/libexec/cua-driver/$exe" | grep "not found"; then
+        exit 1
+      fi
+    done
+    runHook postInstallCheck
+  '';
+
   meta = {
     description = "Background desktop control driver for Hermes' computer_use tool, the build Hermes' pm lock pins";
     homepage = "https://github.com/trycua/cua";

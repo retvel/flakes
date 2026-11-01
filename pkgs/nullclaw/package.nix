@@ -38,6 +38,13 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    test "$(HOME="$TMPDIR" "$out/bin/nullclaw" --version)" = "nullclaw $version"
+    runHook postInstallCheck
+  '';
+
   meta = {
     description = "Small, fully autonomous AI assistant infrastructure written in Zig";
     homepage = "https://github.com/nullclaw/nullclaw";

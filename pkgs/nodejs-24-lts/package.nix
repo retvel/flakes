@@ -3,7 +3,7 @@
   stdenvNoCC,
   stdenv,
   fetchurl,
-  autoPatchelfHook,
+  patchelf,
 }:
 
 let
@@ -29,8 +29,12 @@ stdenvNoCC.mkDerivation {
     hash = versionData.hashes.${stdenv.hostPlatform.system};
   };
 
-  nativeBuildInputs = lib.optional stdenv.hostPlatform.isLinux autoPatchelfHook;
-  buildInputs = lib.optional stdenv.hostPlatform.isLinux stdenv.cc.cc.lib;
+  # Node's ELF keeps its text 2 MiB-aligned (it remaps it to huge pages).
+  # patchelf 0.19 breaks that when it sets the interpreter before the rpath,
+  # which autoPatchelfHook does, and the binary segfaults on start; the other
+  # order works with old and new patchelf alike. So patch by hand: rpath,
+  # then interpreter. The install check catches a binary that won't start.
+  nativeBuildInputs = lib.optional stdenv.hostPlatform.isLinux patchelf;
   dontConfigure = true;
   dontBuild = true;
   dontStrip = true;
@@ -39,6 +43,17 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     mkdir -p "$out"
     cp -R . "$out/"
+  ''
+  + lib.optionalString stdenv.hostPlatform.isLinux ''
+    patchelf --set-rpath ${
+      lib.makeLibraryPath [
+        stdenv.cc.cc.lib
+        stdenv.cc.cc.libgcc
+      ]
+    } "$out/bin/node"
+    patchelf --set-interpreter ${stdenv.cc.bintools.dynamicLinker} "$out/bin/node"
+  ''
+  + ''
     # Replace bundled npm with the independently pinned official npm release.
     # npm's tarball includes its dependencies; no npm install/scripts are needed.
     rm -rf "$out/lib/node_modules/npm"

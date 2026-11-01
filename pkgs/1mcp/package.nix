@@ -3,9 +3,7 @@
   stdenv,
   stdenvNoCC,
   fetchurl,
-  autoPatchelfHook,
-  glibc,
-  libgcc,
+  patchelf,
 }:
 
 let
@@ -39,18 +37,35 @@ stdenvNoCC.mkDerivation {
   dontStrip = true;
   dontFixup = !isLinux;
 
-  nativeBuildInputs = lib.optional isLinux autoPatchelfHook;
-  # Node needs libstdc++ (stdenv.cc.cc.lib), not just libgcc.
-  buildInputs = lib.optionals isLinux [
-    glibc
-    libgcc
-    stdenv.cc.cc.lib
-  ];
+  # Node's ELF keeps its text 2 MiB-aligned (it remaps it to huge pages).
+  # patchelf 0.19 breaks that when it sets the interpreter before the rpath,
+  # which autoPatchelfHook does, and the binary segfaults on start; the other
+  # order works with old and new patchelf alike. So patch by hand: rpath,
+  # then interpreter. The install check catches a binary that won't start.
+  nativeBuildInputs = lib.optional isLinux patchelf;
 
   installPhase = ''
     runHook preInstall
     install -Dm755 "1mcp-${asset}" "$out/bin/1mcp"
+  ''
+  + lib.optionalString isLinux ''
+    patchelf --set-rpath ${
+      lib.makeLibraryPath [
+        stdenv.cc.cc.lib
+        stdenv.cc.cc.libgcc
+      ]
+    } "$out/bin/1mcp"
+    patchelf --set-interpreter ${stdenv.cc.bintools.dynamicLinker} "$out/bin/1mcp"
+  ''
+  + ''
     runHook postInstall
+  '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    test "$(HOME="$TMPDIR" "$out/bin/1mcp" --version)" = "$version"
+    runHook postInstallCheck
   '';
 
   meta = {

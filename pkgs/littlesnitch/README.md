@@ -39,6 +39,7 @@ nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "li
 |---|---|---|
 | `services.littlesnitch.enable` | `false` | Run `littlesnitch --daemon` as upstream's systemd unit does. |
 | `services.littlesnitch.package` | this flake's `littlesnitch` | Package to run. |
+| `services.littlesnitch.updateCheck` | `false` | Let the daemon check for new versions (weekly). `false` links upstream's software update override with automatic checks off, as updates come through Nix; "Check now" in the About dialog still works. `true` leaves that override file to you. |
 
 The service is upstream's own `littlesnitch.service` from the tarball
 (`systemd.packages`), with `ExecStart` pointed into the store: its sandboxing,

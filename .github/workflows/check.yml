@@ -22,6 +22,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+      # macOS packages are mostly app downloads that no binary cache holds:
+      # keep the Nix store between runs instead of fetching them each time.
+      # The key changes with any package; a run restores the newest store
+      # saved before it, and the store is trimmed to 4G before saving.
+      - if: runner.os == 'macOS'
+        uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.lock', '**/*.nix', 'pkgs/**/hashes.json') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ runner.arch }}-
+          gc-max-store-size-macos: 4G
       # Pull from retvel.cachix.org, which is public: no token needed.
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
@@ -29,9 +39,10 @@ jobs:
           skipPush: true
       # Evaluates every system and builds this runner's packages. Not
       # --no-build: its read-only store breaks filtered sources read during
-      # evaluation (hermes-agent's uv.lock).
+      # evaluation (hermes-agent's uv.lock). --keep-going reports every
+      # failing package, not just the first.
       - name: Evaluate all systems, build this runner's packages
-        run: nix flake check --all-systems -L
+        run: nix flake check --all-systems --keep-going -L
       # Only hermes-agent's runtime closure, and only from main: builds of
       # pull requests and update/<name> branches never reach the cache.
       # Paths already on cache.nixos.org are skipped.

@@ -30,13 +30,20 @@ in
       { environment.systemPackages = [ cfg.package ]; }
 
       # Every launch, also from Finder, the Dock or a desktop entry, sees the
-      # pinned release manifests, so the app's own updater stays quiet.
+      # pinned release manifests, so the app's own updater stays quiet, and
+      # sends no usage reports.
       (lib.optionalAttrs isDarwin {
-        launchd.user.envVariables.HERDR_RELEASES_URL = releases;
+        launchd.user.envVariables = {
+          HERDR_RELEASES_URL = releases;
+          HERDR_TELEMETRY = "0";
+        };
       })
 
       (lib.optionalAttrs (!isDarwin) {
-        environment.sessionVariables.HERDR_RELEASES_URL = releases;
+        environment.sessionVariables = {
+          HERDR_RELEASES_URL = releases;
+          HERDR_TELEMETRY = "0";
+        };
       })
     ]
   );

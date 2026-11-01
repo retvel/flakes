@@ -82,7 +82,7 @@ stdenv.mkDerivation (finalAttrs: {
             ${coreutils}/bin/ln -sfn "${placeholder "out"}/libexec/codex" "$link" || true
         fi
       ''} \
-      --add-flags "-c check_for_update_on_startup=false"
+      --add-flags "-c check_for_update_on_startup=false -c analytics.enabled=false"
   ''
   + lib.optionalString isLinux ''
     # The voice host (and its bundled GStreamer) is the one glibc program;

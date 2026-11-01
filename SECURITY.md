@@ -50,6 +50,11 @@ fixes; there are no release branches.
   `REVIEW` (root daemons, network filters, agents), whose updates wait in a
   pull request. The pinned nixpkgs, which every package's libraries and tools
   come from, is bumped weekly, also through a pull request. See [LAYOUT.md](LAYOUT.md) for how the workflow runs.
+- **Updates and telemetry go through Nix.** Packages run as upstream ships
+  them, except that their self-update and update checks are off (updates come
+  from this flake) and their telemetry is off by default through upstream's
+  own switch (`PI_TELEMETRY`, `HERDR_TELEMETRY`, codex's `analytics`), which
+  you can set back.
 - **Binary cache.** CI pushes only `hermes-agent`'s closure, built from `main`,
   to `retvel.cachix.org`; builds of pull requests and `update/<name>` branches
   never reach it. Trusting

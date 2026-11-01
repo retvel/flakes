@@ -24,10 +24,13 @@ See `LAYOUT.md`; keep it in sync when adding a kind of file or workflow.
 
 ## Modules
 
-Run a service as upstream's own installer does (its unit or plist, recheck it
-on a bump), with the binary in the store and its self-update off: Nix makes
-it declarative, it doesn't change how it behaves. Anything beyond that, such
-as a sandbox upstream doesn't ship, is an option that is off by default.
+Run a package and its service as upstream's own installer does (its unit or
+plist, recheck it on a bump), with the binary in the store: Nix makes it
+declarative, it doesn't change how it behaves. Two things go through Nix
+instead: updates (self-update and update checks off) and telemetry (off by
+default, through upstream's own switch, which the user can set back).
+Anything else beyond upstream, such as a sandbox it doesn't ship, is an
+option that is off by default.
 
 ## Checking changes
 

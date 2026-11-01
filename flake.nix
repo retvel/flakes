@@ -105,6 +105,7 @@
                   enable = true;
                   user = "alice";
                   watchdog.enable = true;
+                  settings.autonomy.level = "supervised";
                 };
                 rayfish.enable = true;
               };

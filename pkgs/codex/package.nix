@@ -32,7 +32,7 @@ let
     }
     .${system} or (throw "codex: unsupported system ${system}");
 in
-stdenv.mkDerivation {
+stdenv.mkDerivation (finalAttrs: {
   pname = "codex";
   inherit version;
 
@@ -70,11 +70,13 @@ stdenv.mkDerivation {
     # $CODEX_HOME/packages/app-server-daemon/releases and keeps it updated,
     # unless `current` there already names a package. Point it at this one:
     # the daemon then runs from the store, and its updater stays off, as it
-    # only follows a release under releases/.
+    # only follows a release under releases/. homeManagerModules.codex makes
+    # that link declaratively; this is for installs without it, and leaves a
+    # link that already resolves here (Home Manager's) alone.
     makeWrapper "$out/libexec/codex/bin/codex" "$out/bin/codex" \
       --run ${lib.escapeShellArg ''
         link="''${CODEX_HOME:-$HOME/.codex}/packages/app-server-daemon/current"
-        if [ "$(${coreutils}/bin/readlink "$link")" != "${placeholder "out"}/libexec/codex" ] &&
+        if [ "$(${coreutils}/bin/readlink -f "$link")" != "${placeholder "out"}/libexec/codex" ] &&
           { [ -L "$link" ] || [ ! -e "$link" ]; }; then
           ${coreutils}/bin/mkdir -p "''${link%/*}" &&
             ${coreutils}/bin/ln -sfn "${placeholder "out"}/libexec/codex" "$link" || true
@@ -105,6 +107,9 @@ stdenv.mkDerivation {
     runHook postInstallCheck
   '';
 
+  # What homeManagerModules.codex links app-server-daemon/current to.
+  passthru.appServerDaemon = "${finalAttrs.finalPackage}/libexec/codex";
+
   meta = {
     description = "OpenAI Codex CLI, a coding agent that runs locally (upstream's prebuilt release)";
     homepage = "https://github.com/openai/codex";
@@ -118,4 +123,4 @@ stdenv.mkDerivation {
     ];
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
   };
-}
+})

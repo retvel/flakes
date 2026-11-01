@@ -28,6 +28,26 @@ let
   cfg = config.services.nullclaw;
   isDarwin = options ? launchd;
   home = config.users.users.${cfg.user}.home;
+  format = pkgs.formats.json { };
+  settingsFile = format.generate "nullclaw-settings.json" cfg.settings;
+  hasSettings = cfg.settings != { };
+
+  # Merges `settings` into config.json before each start: Nix's values win,
+  # and everything else (what `nullclaw onboard` wrote, tokens included)
+  # stays. Written next to it and renamed, so a failed merge leaves it as it
+  # was; umask 077, as config.json holds credentials.
+  mergeSettings = pkgs.writeShellScript "nullclaw-merge-settings" ''
+    set -eu
+    umask 077
+    config=${lib.escapeShellArg "${cfg.stateDir}/config.json"}
+    mkdir -p ${lib.escapeShellArg cfg.stateDir}
+    if [ -e "$config" ]; then
+      ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$config" ${settingsFile} > "$config.nix-tmp"
+    else
+      cat ${settingsFile} > "$config.nix-tmp"
+    fi
+    mv "$config.nix-tmp" "$config"
+  '';
 in
 {
   options.services.nullclaw = {
@@ -51,6 +71,24 @@ in
       default = "${home}/.nullclaw";
       defaultText = literalExpression ''"''${config.users.users.<user>.home}/.nullclaw"'';
       description = "NullClaw home (NULLCLAW_HOME): config.json, auth.json, workspace.";
+    };
+    settings = mkOption {
+      inherit (format) type;
+      default = { };
+      example = literalExpression ''
+        {
+          autonomy.level = "supervised";
+          channels.telegram.allow_from = [ "123456789" ];
+        }
+      '';
+      description = ''
+        Settings merged into `stateDir`/config.json before every start
+        (objects merged key by key, Nix winning; lists and other values
+        replaced), so what Nix sets is always in effect and the keys
+        `nullclaw onboard` wrote stay. Don't put tokens or API keys here: the
+        store is world-readable. Keep them in config.json or
+        `environmentFile`. `{ }` leaves config.json alone.
+      '';
     };
     environmentFile = mkOption {
       type = types.nullOr types.str;
@@ -121,6 +159,7 @@ in
             "-c"
             ''
               while [ ! -x "${cfg.package}/bin/nullclaw" ]; do sleep 1; done
+              ${optionalString hasSettings "${mergeSettings}"}
               ${optionalString (cfg.environmentFile != null) ''
                 if [ -r "${cfg.environmentFile}" ]; then set -a; . "${cfg.environmentFile}"; set +a; fi
               ''}
@@ -170,6 +209,7 @@ in
               NULLCLAW_HOME = cfg.stateDir;
             };
             serviceConfig = {
+              ExecStartPre = lib.optional hasSettings mergeSettings;
               User = cfg.user;
               Group = config.users.users.${cfg.user}.group;
               WorkingDirectory = home;

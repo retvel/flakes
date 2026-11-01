@@ -21,6 +21,7 @@ Nix packages by `Prompter`.
 | [anoa](pkgs/anoa) | Anoa headless browser (CDP, a command per action for agents) from upstream's Linux bundle, run unpatched in an FHS environment; Linux only, no compilation |
 | [codex](pkgs/codex) | OpenAI Codex CLI from upstream's prebuilt npm release; Apple Silicon macOS and Linux, no compilation |
 | [cua-driver](pkgs/cua-driver) | Desktop control driver for Hermes' computer_use, the build Hermes' pm lock pins (follows hermes-agent); Linux only, no compilation |
+| [muxin](pkgs/muxin) | One desktop app for all your machines and their AI agents (sessions, desktops, logs, files) over ssh, with its CLI and MCP server, from upstream's prebuilt release; Apple Silicon macOS and Linux, no compilation |
 | [nh](pkgs/nh) | Nix CLI helper from prebuilt upstream binaries, without Rust compilation |
 | [pi](pkgs/pi) | Pi coding agent from published npm packages with Node.js 24 LTS; local assembly, no Pi source compilation |
 | [nodejs-24-lts](pkgs/nodejs-24-lts) | Official prebuilt Node.js 24 LTS with independently pinned npm latest; no source compilation |

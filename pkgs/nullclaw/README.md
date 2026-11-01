@@ -84,6 +84,7 @@ reachable from every configured channel. Review `autonomy` and each channel's
 | `services.nullclaw.package` | `nullclaw` | Package to run; `nullclaw-nightly` works too. |
 | `services.nullclaw.user` | (required) | User it runs as; must be declared in `users.users`. |
 | `services.nullclaw.stateDir` | `<home>/.nullclaw` | `NULLCLAW_HOME`: `config.json`, `auth.json`, workspace. |
+| `services.nullclaw.settings` | `{ }` | Merged into `config.json` before every start (objects key by key, Nix wins; lists replaced), so the keys Nix sets always apply and the rest stays as `nullclaw onboard` wrote it. Not for tokens or API keys: the store is world-readable. |
 | `services.nullclaw.environmentFile` | `<stateDir>/.env` | `KEY=value` file for the gateway (e.g. API keys); skipped if missing. `null` disables it. |
 | `services.nullclaw.watchdog.enable` | `false` | Restart the gateway when a polling channel gets stuck (see below). NixOS only. |
 | `services.nullclaw.watchdog.interval` | `"5min"` | How often the watchdog checks. |

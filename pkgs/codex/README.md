@@ -20,6 +20,28 @@ generated from the binary.
 
 Systems: `aarch64-darwin`, `x86_64-linux`, `aarch64-linux`.
 
+## Home Manager
+
+`homeManagerModules.codex` extends Home Manager's own `programs.codex`, so
+`settings` (`config.toml`), `context` (`AGENTS.md`), skills, MCP servers and
+the rest are configured there, declaratively:
+
+```nix
+{
+  imports = [ inputs.retvel.homeManagerModules.codex ];
+
+  programs.codex = {
+    enable = true; # package defaults to this flake's codex
+    settings.model = "gpt-5";
+  };
+}
+```
+
+It also links `app-server-daemon/current` (see below) in the Codex home Home
+Manager uses (`~/.codex`, or `$XDG_CONFIG_HOME/codex` with
+`home.preferXdgDirectories`), so the daemon's pin is part of the generation
+instead of something the wrapper writes at run time.
+
 ## Updates
 
 `update.sh` follows npm's `latest` tag and pins each platform package by the
@@ -38,7 +60,8 @@ patches the source instead). So the wrapper points
 `$CODEX_HOME/packages/app-server-daemon/current` at this package's
 `libexec/codex`, replacing a link to an older one: the daemon then runs from
 the store, and its updater stays off, since it only follows a release under
-`releases/`. A real directory there is left alone.
+`releases/`. A real directory there is left alone, and so is a link that
+already resolves to this package (Home Manager's, with the module above).
 
 Everything else in `~/.codex` (config, login, sessions) is yours; the store
 holds only the program.

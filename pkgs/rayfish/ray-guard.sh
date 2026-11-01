@@ -42,6 +42,15 @@ case "$subcommand" in
     fi
     exec systemctl "$subcommand" rayfish.service
     ;;
+  config)
+    # The daemon (root) would replace its own binary, here the store copy.
+    case " ${*:-} " in
+      *' auto-update on '*|*' auto-update=on '*)
+        echo "rayfish: automatic updates are disabled; update the Nix flake instead" >&2
+        exit 1
+        ;;
+    esac
+    ;;
   auto-update|install|uninstall)
     echo "rayfish: service management is owned by the Nix module" >&2
     exit 1

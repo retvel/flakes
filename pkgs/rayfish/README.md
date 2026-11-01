@@ -70,7 +70,10 @@ Both run the binary straight from the Nix store.
 
 The `ray` on `PATH` is a wrapper that refuses commands that would install,
 replace, or install the service outside Nix: `install`, `uninstall`,
-`auto-update`, `update` (except `--check`/`--list`), and `sudo ray up`.
+`auto-update`, `config set auto-update on`, `update` (except
+`--check`/`--list`), and `sudo ray up`. Automatic updates are off by default
+upstream; keep them off in the web UI too, as the daemon runs as root and
+would replace its binary in the store.
 
 `sudo ray stop`, `sudo ray start` and `sudo ray restart` act on the
 Nix-managed service instead: on macOS they unload, load or kickstart the

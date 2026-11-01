@@ -7,8 +7,10 @@ import sys
 
 app = sys.argv[1]
 version = sys.argv[2] if len(sys.argv) > 2 else ""
+# lstrip: some apps ship an XML plist with whitespace before <?xml, which
+# macOS accepts and plistlib doesn't.
 with open(os.path.join(app, "Contents", "Info.plist"), "rb") as f:
-    info = plistlib.load(f)
+    info = plistlib.loads(f.read().lstrip())
 exe = os.path.join(app, "Contents", "MacOS", info["CFBundleExecutable"])
 if not os.access(exe, os.X_OK):
     sys.exit(f"{app}: {exe} is not an executable")

@@ -5,6 +5,7 @@
 # Needs gh, curl, jq and nix.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
 repo=nullclaw/nullclaw
 base="https://github.com/$repo/releases/download/nightly"
@@ -12,9 +13,8 @@ base="https://github.com/$repo/releases/download/nightly"
 # The release notes carry "- Version: `nightly-YYYYMMDD-<sha>`", as the binary's --version does.
 version="$(gh release view nightly -R "$repo" --json body -q .body |
   sed -n 's/^- Version: `nightly-\([^`]*\)`.*/\1/p')"
-[ -n "$version" ] || { echo "nullclaw-nightly: no version in release notes" >&2; exit 1; }
-current="$(jq -r .version hashes.json)"
-[ "$version" != "$current" ] || { echo "nullclaw-nightly: $current is latest"; exit 0; }
+check_version nullclaw-nightly "$version" '^[0-9]{8}-[0-9a-f]{7,40}$'
+skip_if_current nullclaw-nightly "$version"
 
 declare -A targets=(
   [aarch64-darwin]=macos-aarch64
@@ -29,6 +29,7 @@ for system in "${!targets[@]}"; do
   # rather than fail the whole update workflow if we land in that window.
   hex="$(curl -fsSL "$base/$asset.sha256" | awk '{ print $1 }')" ||
     { echo "nullclaw-nightly: $asset.sha256 missing, nightly is being published; skipping"; exit 0; }
+  [[ $hex =~ ^[0-9a-f]{64}$ ]] || { echo "nullclaw-nightly: bad checksum for $asset" >&2; exit 1; }
   sri="$(nix hash convert --hash-algo sha256 --to sri "$hex")"
   hashes="$(jq --arg s "$system" --arg h "$sri" '. + {($s): $h}' <<<"$hashes")"
 done

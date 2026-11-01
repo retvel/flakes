@@ -2,15 +2,12 @@
 # Bump hashes.json to the latest upstream release. Needs gh, jq and nix.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
-# `gh release view` without a tag skips pre-releases.
-latest="$(gh release view -R utmapp/UTM --json tagName -q .tagName)"
-version="${latest#v}"
-current="$(jq -r .version hashes.json)"
-[ "$version" != "$current" ] || { echo "utm: $current is latest"; exit 0; }
+# gh_latest skips pre-releases.
+version="$(gh_latest utm utmapp/UTM)"
+skip_if_current utm "$version"
 
-hash="$(nix store prefetch-file --json \
-  "https://github.com/utmapp/UTM/releases/download/v$version/UTM.dmg" | jq -r .hash)"
-
-jq -n --arg v "$version" --arg h "$hash" '{version: $v, hashes: {"UTM.dmg": $h}}' > hashes.json
+write_hashes "$version" \
+  UTM.dmg="https://github.com/utmapp/UTM/releases/download/v$version/UTM.dmg"
 echo "utm: $current -> $version"

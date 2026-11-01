@@ -4,12 +4,12 @@
 # curl and jq.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
 registry=https://registry.npmjs.org/@openai/codex
 version="$(curl -fsS "$registry/latest" | jq -r '.version // empty')"
-[ -n "$version" ] || { echo "codex: no latest version on npm" >&2; exit 1; }
-current="$(jq -r .version hashes.json)"
-[ "$version" != "$current" ] || { echo "codex: $current is latest"; exit 0; }
+check_version codex "$version" '^[0-9]+\.[0-9]+\.[0-9]+$'
+skip_if_current codex "$version"
 
 integrity() { curl -fsS "$registry/$version-$1" | jq -er .dist.integrity; }
 jq -n --arg v "$version" \

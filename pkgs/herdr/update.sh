@@ -5,6 +5,7 @@
 # Needs curl, jq and nix.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
 releases=https://releases.herdr.dev
 # Kept beside hashes.json: the herdr-app wrapper serves them to the app as its
@@ -15,15 +16,14 @@ cli_manifest="$(curl -fsS https://herdr.dev/latest.json)"
 app="$(jq -r '.version // empty' <<<"$app_manifest")"
 core="$(jq -r '.version // empty' <<<"$core_manifest")"
 cli="$(jq -r '.version // empty' <<<"$cli_manifest")"
-[ -n "$app" ] && [ -n "$core" ] && [ -n "$cli" ] ||
-  { echo "herdr: no version in latest.json" >&2; exit 1; }
+check_version herdr "$app"
+check_version herdr "$core"
+check_version herdr "$cli"
 
 # The workflow names its commit after .version, so it carries all three.
 version="$app+core.$core+cli.$cli"
-current="$(jq -r .version hashes.json)"
-[ "$version" != "$current" ] || { echo "herdr: $current is latest"; exit 0; }
+skip_if_current herdr "$version"
 
-prefetch() { nix store prefetch-file --json "$1" | jq -r .hash; }
 cli_url="https://github.com/herdrdev/herdr/releases/download/v$cli/herdr"
 hashes="$(jq -n \
   --arg dmg "$(prefetch "$releases/app/$app/Herdr.dmg")" \
@@ -46,6 +46,9 @@ hashes="$(jq -n \
     "cli-x86_64-linux": $hl64,
     "cli-aarch64-linux": $hla64
   }')"
+# A failed download inside the "$(prefetch ...)" above leaves an empty hash.
+jq -e 'all(.[]; startswith("sha256-"))' <<<"$hashes" >/dev/null ||
+  { echo "herdr: a download failed" >&2; exit 1; }
 
 jq -n --arg v "$version" --arg a "$app" --arg c "$core" --arg l "$cli" --argjson h "$hashes" \
   '{version: $v, app: $a, core: $c, cli: $l, hashes: $h}' > hashes.json

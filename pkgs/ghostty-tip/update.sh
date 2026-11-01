@@ -5,6 +5,7 @@
 # Needs gh, jq and nix.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
 repo=ghostty-org/ghostty
 
@@ -13,6 +14,7 @@ tag="$(gh api "repos/$repo/git/ref/tags/tip" -q .object.sha)"
 read -r date sha < <(gh api "repos/$repo/git/tags/$tag" -q '"\(.tagger.date) \(.object.sha)"')
 [ -n "${sha:-}" ] || { echo "ghostty-tip: could not resolve the tip commit" >&2; exit 1; }
 version="$(tr -d - <<<"${date%%T*}")-${sha:0:7}"
+check_version ghostty-tip "$version" '^[0-9]{8}-[0-9a-f]{7}$'
 
 digest="$(gh release view tip -R "$repo" --json assets -q '.assets[] | select(.name == "Ghostty.dmg") | .digest')"
 # Missing while upstream replaces the assets; skip this run rather than fail.

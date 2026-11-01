@@ -3,6 +3,7 @@
 import concurrent.futures
 import json
 import pathlib
+import re
 import urllib.parse
 import urllib.request
 
@@ -25,6 +26,8 @@ def registry(name, version):
 
 def main():
     latest = registry("@earendil-works/pi-coding-agent", "latest")["version"]
+    if not re.fullmatch(r"\d+\.\d+\.\d+", latest):
+        raise ValueError(f"Unexpected Pi version {latest!r}")
     hashes_path = ROOT / "hashes.json"
     current = json.loads(hashes_path.read_text())["version"] if hashes_path.exists() else None
     if latest == current:

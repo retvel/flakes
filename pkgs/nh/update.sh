@@ -2,24 +2,14 @@
 # Bump hashes.json to the latest upstream release. Needs gh, jq and nix.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
-latest="$(gh release view -R nix-community/nh --json tagName -q .tagName)"
-version="${latest#v}"
-current="$(jq -r .version hashes.json)"
-[ "$version" != "$current" ] || { echo "nh: $current is latest"; exit 0; }
+version="$(gh_latest nh nix-community/nh)"
+skip_if_current nh "$version"
 
-declare -A assets=(
-  [aarch64-darwin]=nh-aarch64-darwin
-  [aarch64-linux]=nh-aarch64-linux
-  [x86_64-linux]=nh-x86_64-linux
-)
-
-hashes='{}'
-for system in "${!assets[@]}"; do
-  hash="$(nix store prefetch-file --json \
-    "https://github.com/nix-community/nh/releases/download/v$version/${assets[$system]}" | jq -r .hash)"
-  hashes="$(jq --arg s "$system" --arg h "$hash" '. + {($s): $h}' <<<"$hashes")"
-done
-
-jq -n --arg v "$version" --argjson h "$hashes" '{version: $v, hashes: ($h | to_entries | sort_by(.key) | from_entries)}' > hashes.json
+base="https://github.com/nix-community/nh/releases/download/v$version"
+write_hashes "$version" \
+  aarch64-darwin="$base/nh-aarch64-darwin" \
+  aarch64-linux="$base/nh-aarch64-linux" \
+  x86_64-linux="$base/nh-x86_64-linux"
 echo "nh: $current -> $version"

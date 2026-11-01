@@ -6,10 +6,12 @@
 | `overlays/default.nix` | `pkgs.retvel.<name>`, built against the consumer's nixpkgs. |
 | `pkgs/<name>/package.nix` | The derivation. Read `version`/hashes from `hashes.json` for prebuilt binaries. |
 | `pkgs/<name>/hashes.json` | `{ "version": ..., "hashes": { "<key>": "sha256-..." } }`, written by `update.sh`. Keys are whatever the package looks up (usually the system). Exception: `hermes-agent` pins an upstream flake as `{ version, rev, narHash }`, and `cua-driver` has none: it reads version, URL and hash from that Hermes commit's `pm/lock.json`. |
-| `pkgs/<name>/update.sh` | Optional. Bumps `hashes.json` to the latest upstream; no-op when current. Run by `.github/workflows/update.yml`. |
+| `pkgs/<name>/update.sh` | Optional. Bumps `hashes.json` to the latest upstream; no-op when current. Run by `.github/workflows/update.yml`. Sources `lib/update.sh`. |
+| `lib/update.sh` | Helpers for `update.sh`: `check_version` (rejects unexpected upstream versions), `gh_latest`, `skip_if_current`, `prefetch`, `write_hashes`. |
 | `pkgs/<name>/module.nix` | Optional. `self: { config, ... }: { ... }`; exported as both `darwinModules.<name>` and `nixosModules.<name>`. Default package is `self.packages.${system}.<name>`. |
 | `pkgs/<name>/nixos-module.nix`, `darwin-module.nix` | Same shape as `module.nix`, exported only to `nixosModules` or `darwinModules`. |
 | `pkgs/<name>/home-module.nix` | Same shape, exported as `homeManagerModules.<name>`. |
 | `pkgs/<name>/README.md` | Optional. The package's usage, options and maintenance notes. |
-| `.github/workflows/check.yml` | `nix flake check` on Linux x86_64/aarch64 and macOS; the x86_64 job pushes `hermes-agent` (only) to retvel.cachix.org. |
-| `.github/workflows/update.yml` | Twice daily (03:17, 15:17 UTC): runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`, then pushes `hermes-agent` to retvel.cachix.org. |
+| `.github/workflows/check.yml` | `nix flake check` on Linux x86_64/aarch64 and macOS, read-only token; on `main` (not pull requests) the x86_64 job pushes `hermes-agent` (only) to retvel.cachix.org. |
+| `.github/workflows/update.yml` | Twice daily (03:17, 15:17 UTC), one run at a time: runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`, or for the packages in `REVIEW` opens a pull request from `update/<name>`; then pushes `hermes-agent` to retvel.cachix.org. |
+| `.github/dependabot.yml` | Weekly bumps of the actions, which workflows pin by commit SHA. |

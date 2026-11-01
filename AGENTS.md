@@ -90,3 +90,10 @@ This repo is public. Commits and files must not carry private data:
 - No hostnames, usernames, IPs, local paths or other details of anyone's
   machines in code, comments, docs or commit messages; use `alice`,
   `example.com` and the like in examples.
+- READMEs, notes and comments describe a package for anyone who installs
+  it, not how its maintainer uses it. Leave out their setup and habits: which
+  features, channels or services they run, the other tools they pair it with,
+  what they tested on, and incidents seen on their machines. Write such facts
+  as upstream behavior or a general case ("a polling channel", "another
+  VPN", "a transient API error"); upstream's own release, bug or issue is
+  fine to cite.

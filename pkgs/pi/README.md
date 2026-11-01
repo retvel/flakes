@@ -24,8 +24,8 @@ home.packages = [ inputs.xr3t.packages.${pkgs.stdenv.hostPlatform.system}.pi ];
 ```
 
 Supported platforms: Apple Silicon macOS, Linux ARM64 and Linux x86_64. Only
-native helpers for the host are retained in the output. Darwin is tested
-locally; Linux builds and native-helper loading are checked by CI.
+native helpers for the host are retained in the output. CI builds it and
+checks native-helper loading on every supported system.
 The launcher includes fd/ripgrep, plus Linux clipboard tools. It appends Node
 and npm to PATH, preserving the user's preferred Node for commands run by Pi.
 It pins `PI_PACKAGE_DIR` to this installation so a parent Pi installation cannot

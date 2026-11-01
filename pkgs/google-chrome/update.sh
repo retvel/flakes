@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # Bump hashes.json to the latest Stable Chrome for macOS. The target version is
 # the newest release Google serves to at least half of Stable users
-# (versionhistory API); the download URL comes from Google's update server
-# (Omaha). Asked as an on-demand check ("Check for updates" in About Chrome) it
-# skips the staged rollout; it is still asked until it serves the target. Never downgrades. Downloads the
-# dmg (~280 MB) on a bump to hash it. Needs curl, jq, uuidgen and nix.
+# (versionhistory API); the download URL and the dmg's sha256, which the
+# download must match, come from Google's update server (Omaha). Asked as an
+# on-demand check ("Check for updates" in About Chrome) it skips the staged
+# rollout; it is still asked until it serves the target. Never downgrades.
+# Downloads the dmg (~280 MB) on a bump to hash it. Needs curl, jq, uuidgen and
+# nix.
 set -euo pipefail
 cd "$(dirname "$0")"
 # shellcheck source-path=SCRIPTDIR source=../../lib/update.sh
@@ -18,7 +20,7 @@ skip_if_current google-chrome "$version"
 newest="$(printf '%s\n%s\n' "$current" "$version" | sort -V | tail -n1)"
 [ "$newest" = "$version" ] || { echo "google-chrome: $current is newer than Stable $version"; exit 0; }
 
-url=""
+url="" sha256=""
 for _ in $(seq 1 10); do
   id="$(uuidgen)"
   response="$(curl -fsS -X POST -H 'Content-Type: text/xml' \
@@ -33,7 +35,10 @@ for _ in $(seq 1 10); do
     base="$(grep -oE "codebase=['\"]https://dl\.google\.com/release2/[^'\"]+" <<<"$response" \
       | head -n1 | sed -E "s/codebase=['\"]//")"
     pkg="$(grep -oE "<package [^>]*name=['\"][^'\"]+\.dmg" <<<"$response" | sed -E "s/.*name=['\"]//")"
-    [ -n "$base" ] && [ -n "$pkg" ] && url="$base$pkg" && break
+    # The sha256 Google lists for the dmg, which the download must match.
+    sha256="$(grep -oE "<package [^>]*>" <<<"$response" | grep -oE "hash_sha256=['\"][0-9a-f]{64}" \
+      | head -n1 | grep -oE '[0-9a-f]{64}$' || true)"
+    [ -n "$base" ] && [ -n "$pkg" ] && [ -n "$sha256" ] && url="$base$pkg" && break
   fi
   sleep 3
 done
@@ -42,7 +47,7 @@ done
 # Only Google's release host, and nothing that could break out of the URL.
 [[ $url =~ ^https://dl\.google\.com/release2/[A-Za-z0-9._/-]+\.dmg$ ]] ||
   { echo "google-chrome: unexpected download URL $url" >&2; exit 1; }
-hash="$(prefetch "$url")"
+hash="$(prefetch "$url" "$sha256")"
 jq -n --arg v "$version" --arg u "$url" --arg h "$hash" \
   '{version: $v, url: $u, hashes: {"GoogleChrome.dmg": $h}}' > hashes.json
 echo "google-chrome: $current -> $version"

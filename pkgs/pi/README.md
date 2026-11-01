@@ -32,8 +32,9 @@ It pins `PI_PACKAGE_DIR` to this installation so a parent Pi installation cannot
 supply a different version's package assets. User configuration and sessions
 remain under the normal Pi directories and are not managed by this package.
 It also defaults `PI_SKIP_VERSION_CHECK=1` (no `pi.dev` latest-version
-request: updates come through this flake); set it yourself to override.
-Telemetry is upstream's default; turn it off with `PI_TELEMETRY=0`.
+request: updates come through this flake) and `PI_TELEMETRY=0` (no install or
+update telemetry, no provider attribution headers). Setting either variable
+yourself overrides it.
 
 ## Security overrides
 

@@ -50,8 +50,9 @@ integrity hash the registry publishes, so nothing is downloaded.
 Codex doesn't update itself here (no `CODEX_MANAGED_BY_*` package manager is
 set), and the wrapper passes `-c check_for_update_on_startup=false`, so it
 doesn't look for or announce newer releases either: updates come through this
-flake. The flag wins over `~/.codex/config.toml`; run
-`libexec/codex/bin/codex` to get the check back.
+flake. It also passes `-c analytics.enabled=false`: no usage analytics.
+Both flags win over `~/.codex/config.toml`; run `libexec/codex/bin/codex`
+to get upstream's defaults back.
 
 `codex app-server daemon` would copy the running package into
 `$CODEX_HOME/packages/app-server-daemon/releases` and keep that copy updated

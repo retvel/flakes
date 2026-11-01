@@ -49,6 +49,10 @@ this repo's `Update herdr to …` commits, picked up by `nix flake update`.
   signed bundle can't be changed), so the app's own updater is back; use the
   module there.
 
+The app also sends a daily usage report upstream; the module and
+`bin/herdr-app` set `HERDR_TELEMETRY=0`, so it doesn't (the same Finder/Dock
+caveat applies without the module).
+
 After enabling the module, quit and reopen Herdr so it starts with the
 variable (on NixOS, log in again first: session variables are read at login).
 

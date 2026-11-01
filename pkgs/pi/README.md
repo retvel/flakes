@@ -1,8 +1,8 @@
 # Pi
 
 [Pi](https://pi.dev) coding agent assembled from official npm releases, using
-the flake's `nodejs-24-lts` (official Node 24 LTS binary with independently
-pinned npm). This does not compile Pi's
+the flake's `nodejs-24-lts` (official Node 24 LTS binary with the npm it
+ships). This does not compile Pi's
 TypeScript, Bun executable, or native helpers. Nix still runs local assembly
 steps: fetch/extract packages, install dependencies without lifecycle scripts,
 and create a launcher. Node/npm come from upstream release archives. Packaging
@@ -32,9 +32,10 @@ It pins `PI_PACKAGE_DIR` to this installation so a parent Pi installation cannot
 supply a different version's package assets. User configuration and sessions
 remain under the normal Pi directories and are not managed by this package.
 It also defaults `PI_SKIP_VERSION_CHECK=1` (no `pi.dev` latest-version
-request: updates come through this flake) and `PI_TELEMETRY=0` (no install or
-update telemetry, no provider attribution headers). Setting either variable
-yourself overrides it.
+request: updates come through this flake; set it yourself to override) and
+`PI_TELEMETRY=0` (no install or update telemetry, no provider attribution
+headers) unless you set `PI_TELEMETRY` or `enableInstallTelemetry` in Pi's
+`settings.json` (global or the project's), which then decides.
 
 ## Security overrides
 
@@ -83,8 +84,8 @@ to source builds when upstream's versioned installer files are unavailable.
 this repo's update workflow uses; actual dependency hashes live in
 `install-lock/package-lock.json`.
 
-Update Pi through this flake, not `pi update self`. Node and npm pins are updated
-separately by `pkgs/nodejs-24-lts/update.sh`; they no longer wait for nixpkgs to
+Update Pi through this flake, not `pi update self`. Node (and its npm) is updated
+separately by `pkgs/nodejs-24-lts/update.sh`; it no longer waits for nixpkgs to
 package the latest patch. Consumers still explicitly update their flake lock.
 
 ## Sources

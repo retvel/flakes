@@ -28,7 +28,9 @@ Run a package and its service as upstream's own installer does (its unit or
 plist, recheck it on a bump), with the binary in the store: Nix makes it
 declarative, it doesn't change how it behaves. Two things go through Nix
 instead: updates (self-update and update checks off) and telemetry (off by
-default, through upstream's own switch, which the user can set back).
+default, through upstream's own switch). Both are defaults: what the user
+sets in Nix or in the program's own config still wins, wherever the
+program allows it (a self-update can't replace the store copy anyway).
 Anything else beyond upstream, such as a sandbox it doesn't ship, is an
 option that is off by default.
 

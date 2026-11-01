@@ -23,7 +23,7 @@ Nix packages by `Prompter`.
 | [cua-driver](pkgs/cua-driver) | Desktop control driver for Hermes' computer_use, the build Hermes' pm lock pins (follows hermes-agent); Linux only, no compilation |
 | [nh](pkgs/nh) | Nix CLI helper from prebuilt upstream binaries, without Rust compilation |
 | [pi](pkgs/pi) | Pi coding agent from published npm packages with Node.js 24 LTS; local assembly, no Pi source compilation |
-| [nodejs-24-lts](pkgs/nodejs-24-lts) | Official prebuilt Node.js 24 LTS with independently pinned npm latest; no source compilation |
+| [nodejs-24-lts](pkgs/nodejs-24-lts) | Official prebuilt Node.js 24 LTS with the npm it ships (or npm's latest, as an option); no source compilation |
 | [ghostty](pkgs/ghostty) | Ghostty terminal's latest release from upstream's Ghostty.dmg; macOS only, no compilation |
 | [ghostty-tip](pkgs/ghostty) | Ghostty's rolling tip build from main, bumped daily |
 | [google-chrome](pkgs/google-chrome) | Google Chrome's latest Stable release from Google's signed dmg (unfree); macOS only, no compilation |

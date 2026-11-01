@@ -37,7 +37,7 @@ jobs:
       # update/<name>) for review instead of going straight to main.
       REVIEW: "1mcp codex hermes-agent littlesnitch nullclaw nullclaw-nightly opencode pi rayfish"
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Full history, so the rebase before the push always finds its base.
           fetch-depth: 0

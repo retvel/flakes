@@ -78,7 +78,6 @@
       # checks; update.yml builds them when it bumps them.
       rolling = [
         "ghostty-tip"
-        "nullclaw-nightly"
       ];
 
       # Used by checks.<system>.nixos-modules. hermes-agent is left out: it is

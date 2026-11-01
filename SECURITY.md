@@ -37,9 +37,8 @@ fixes; there are no release branches.
   hash. Every upstream version goes through `check_version`
   (`lib/update.sh`) before it reaches a URL, `hashes.json` or a commit
   message.
-- **Rolling builds.** `ghostty-tip` and `nullclaw-nightly` follow upstream
-  builds that are replaced in place. Their pins only download until the next
-  build.
+- **Rolling builds.** `ghostty-tip` follows upstream builds that are
+  replaced in place. Its pin only downloads until the next build.
 - **Updates.** New releases are committed to `main` automatically once
   `nix flake check` passes, without review, except for the packages in
   `REVIEW` (root daemons, network filters, agents), whose updates wait in a

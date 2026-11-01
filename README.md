@@ -32,7 +32,6 @@ Nix packages by `Prompter`.
 | [littlesnitch](pkgs/littlesnitch) | Little Snitch for Linux network monitor (unfree freeware binary), with a NixOS service module |
 | [lite-xl](pkgs/lite-xl) | Lite XL editor from upstream's addons release (language plugins, colour schemes) as Lite XL.app, Apple Silicon only |
 | [nullclaw](pkgs/nullclaw) | Small, fully autonomous AI assistant in one static Zig binary, with a Home Manager module that runs it as upstream's user service |
-| [nullclaw-nightly](pkgs/nullclaw) | NullClaw's rolling nightly build, bumped daily |
 | [nullclaw-chat-ui](pkgs/nullclaw-chat-ui) | NullClaw's web chat UI as static files, to serve from any web server |
 | [opencode](pkgs/opencode) | OpenCode 2 AI coding agent from upstream's prebuilt npm release, kept on Nix (no self-update); Apple Silicon macOS and Linux, no compilation |
 | [rayfish](pkgs/rayfish) | P2P mesh VPN (iroh), with a nix-darwin/NixOS service module |
@@ -67,7 +66,7 @@ Or run one without installing: `nix run github:retvel/flakes#rayfish -- --versio
   `module.nix` (both), `darwin-module.nix` or `nixos-module.nix` (one only)
 - `homeManagerModules.<name>`: for packages that have a `home-module.nix`
 - `checks.<system>.<name>`: builds every package but the rolling
-  `ghostty-tip` and `nullclaw-nightly`; `checks.<system>.formatting`
+  `ghostty-tip`; `checks.<system>.formatting`
   checks that every `.nix` file is formatted, `checks.<linux>.nixos-modules`
   that the NixOS modules evaluate
 - `formatter`: `nixfmt`

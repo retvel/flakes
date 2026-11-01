@@ -2,13 +2,12 @@
   lib,
   stdenvNoCC,
   fetchurl,
-  nightly ? false, # true: upstream's rolling `nightly` prerelease
 }:
 
 let
   # Version and per-system hashes live in hashes.json so update.sh can rewrite
-  # them without touching Nix code. The nightly has its own, bumped daily.
-  sources = lib.importJSON (if nightly then ../nullclaw-nightly/hashes.json else ./hashes.json);
+  # them without touching Nix code.
+  sources = lib.importJSON ./hashes.json;
   inherit (sources) version hashes;
 
   targets = {
@@ -19,16 +18,13 @@ let
 
   system = stdenvNoCC.hostPlatform.system;
   target = targets.${system} or (throw "NullClaw has no prebuilt release for ${system}");
-  # Tagged releases name their assets nullclaw-<target>.bin; the nightly drops the suffix.
-  tag = if nightly then "nightly" else "v${version}";
-  asset = if nightly then "nullclaw-${target}" else "nullclaw-${target}.bin";
 in
 stdenvNoCC.mkDerivation {
-  pname = if nightly then "nullclaw-nightly" else "nullclaw";
+  pname = "nullclaw";
   inherit version;
 
   src = fetchurl {
-    url = "https://github.com/nullclaw/nullclaw/releases/download/${tag}/${asset}";
+    url = "https://github.com/nullclaw/nullclaw/releases/download/v${version}/nullclaw-${target}.bin";
     hash = hashes.${system};
   };
 

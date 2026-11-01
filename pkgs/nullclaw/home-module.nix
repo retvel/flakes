@@ -73,7 +73,7 @@ in
       type = types.package;
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.nullclaw;
       defaultText = literalExpression "retvel.packages.\${pkgs.stdenv.hostPlatform.system}.nullclaw";
-      description = "NullClaw package to run, e.g. `nullclaw-nightly`.";
+      description = "NullClaw package to run.";
     };
     stateDir = mkOption {
       type = types.str;

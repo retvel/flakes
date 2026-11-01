@@ -1,5 +1,6 @@
 {
   lib,
+  python3,
   stdenvNoCC,
   fetchurl,
   undmg,
@@ -42,6 +43,13 @@ stdenvNoCC.mkDerivation {
       chmod +x "$out/bin/$prog"
     done
     runHook postInstall
+  '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    ${python3.interpreter} ${../../lib/check-app.py} "$out/Applications/UTM.app" "$version"
+    runHook postInstallCheck
   '';
 
   meta = {

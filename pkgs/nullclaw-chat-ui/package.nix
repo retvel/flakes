@@ -26,6 +26,13 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    test -f "$out/share/nullclaw-chat-ui/index.html"
+    runHook postInstallCheck
+  '';
+
   meta = {
     description = "Web chat UI for NullClaw's WebSocket channel (static files)";
     homepage = "https://github.com/nullclaw/nullclaw-chat-ui";

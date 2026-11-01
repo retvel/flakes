@@ -1,5 +1,6 @@
 {
   lib,
+  python3,
   stdenv,
   fetchurl,
   undmg,
@@ -144,6 +145,31 @@ stdenv.mkDerivation {
       --subst-var-by exe "$exe"
     chmod +x "$out/bin/herdr-app"
     runHook postInstall
+  '';
+
+  # The CLI and herdr-core run; the app, which needs a display, is checked
+  # without running it: its libraries resolve (Linux), its bundle names
+  # its version (macOS).
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    test "$(HOME="$TMPDIR" "$out/bin/herdr" --version)" = "herdr ${sources.cli}"
+    test "$(HOME="$TMPDIR" "$out/bin/herdr-core" --version)" = "hc ${sources.core}"
+  ''
+  + (
+    if isDarwin then
+      ''
+        ${python3.interpreter} ${../../lib/check-app.py} "$out/Applications/Herdr.app" "${sources.app}"
+      ''
+    else
+      ''
+        if LD_TRACE_LOADED_OBJECTS=1 "$out/libexec/herdr-app" | grep "not found"; then
+          exit 1
+        fi
+      ''
+  )
+  + ''
+    runHook postInstallCheck
   '';
 
   meta = {

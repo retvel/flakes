@@ -1,5 +1,6 @@
 {
   lib,
+  python3,
   stdenvNoCC,
   fetchurl,
   _7zz,
@@ -66,6 +67,16 @@ stdenvNoCC.mkDerivation {
     cp -R "$res/ghostty/shell-integration" "$shell_integration"
     cp -R "$res/vim/vimfiles" "$vim"
     runHook postInstall
+  '';
+
+  # The tip's version is its build date and commit, not the bundle's.
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    ${python3.interpreter} ${../../lib/check-app.py} "$out/Applications/Ghostty.app" ${
+      lib.optionalString (!tip) "\"$version\""
+    }
+    runHook postInstallCheck
   '';
 
   meta = {

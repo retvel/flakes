@@ -51,6 +51,13 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    "$out/libexec/rayfish/ray" --version | grep -q "^ray $version "
+    runHook postInstallCheck
+  '';
+
   meta = {
     description = "P2P mesh VPN powered by iroh";
     homepage = "https://rayfish.xyz";

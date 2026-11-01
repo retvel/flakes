@@ -1,5 +1,6 @@
 {
   lib,
+  python3,
   stdenvNoCC,
   fetchurl,
   undmg,
@@ -41,6 +42,13 @@ stdenvNoCC.mkDerivation {
     SH
     chmod +x "$out/bin/google-chrome"
     runHook postInstall
+  '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    ${python3.interpreter} ${../../lib/check-app.py} "$out/Applications/Google Chrome.app" "$version"
+    runHook postInstallCheck
   '';
 
   meta = {

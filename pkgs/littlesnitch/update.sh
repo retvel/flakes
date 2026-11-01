@@ -21,16 +21,14 @@ declare -A arches=(
   [x86_64-linux]=amd64
 )
 
-# Upstream's checksum list, to cross-check each download.
-sums="$(curl -fsSL "$base/littlesnitch-$version.hashes.txt")"
+# Upstream's checksum list, which each download must match.
+sums="$base/littlesnitch-$version.hashes.txt"
 
 hashes='{}'
 for system in "${!arches[@]}"; do
   file="littlesnitch-$version-${arches[$system]}-linux-musl.tar.gz"
-  hash="$(prefetch "$base/$file")"
-  want="$(awk -v f="$file" '$2 == f { print $1 }' <<<"$sums")"
-  [ "$(nix hash convert --hash-algo sha256 --to base16 "$hash")" = "$want" ] \
-    || { echo "littlesnitch: $file does not match $version.hashes.txt" >&2; exit 1; }
+  want="$(upstream_sha256 "$base/$file")"
+  hash="$(prefetch "$base/$file" "$want")"
   hashes="$(jq --arg s "$system" --arg h "$hash" '. + {($s): $h}' <<<"$hashes")"
 done
 

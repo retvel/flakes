@@ -11,7 +11,7 @@
 | `lib/hardening.nix` | The systemd sandboxing the opt-in `hardening.enable` options share (`serviceConfig`); each module adds what its service can live without. Modules otherwise run services as upstream's installer does. |
 | `lib/update-all.sh` | What `update.yml` runs, once per `UPDATE_SYSTEM`: every `update.sh` of that system's packages (`x86_64-linux`: all that build there; `aarch64-darwin`: those that build only on macOS), each update built (`nix flake check --keep-going`) before it lands, and on Linux the weekly `nixpkgs` bump. |
 | `lib/check-app.py` | Install check for a macOS app bundle: its executable exists, and its version is the pinned one. |
-| `lib/update.sh` | Helpers for `update.sh`: `check_version` (rejects unexpected upstream versions), `gh_latest`, `skip_if_current`, `prefetch`, `write_hashes`. |
+| `lib/update.sh` | Helpers for `update.sh`: `check_version` (rejects unexpected upstream versions), `gh_latest`, `skip_if_current`, `prefetch` (checks a download against upstream's sha256 when given one, and a GitHub release asset against GitHub's digest), `write_hashes` (with `sums` set, against upstream's checksum list or per-file `.sha256`). |
 | `pkgs/<name>/module.nix` | Optional. `self: { config, ... }: { ... }`; exported as both `darwinModules.<name>` and `nixosModules.<name>`. Default package is `self.packages.${system}.<name>`. |
 | `pkgs/<name>/nixos-module.nix`, `darwin-module.nix` | Same shape as `module.nix`, exported only to `nixosModules` or `darwinModules`. |
 | `pkgs/<name>/home-module.nix` | Same shape, exported as `homeManagerModules.<name>`. |

@@ -12,8 +12,13 @@ See `LAYOUT.md`; keep it in sync when adding a kind of file or workflow.
 
 1. `pkgs/<name>/package.nix` (+ `hashes.json` and `update.sh` if it tracks upstream releases).
    `update.sh` sources `lib/update.sh` and passes every upstream version
-   through `check_version`. If the package runs as root or acts with the
+   through `check_version`. Where upstream publishes checksums (a sums file,
+   `.sha256` files, a manifest), check downloads against them (`sums`, or
+   `prefetch URL SHA256`); GitHub release assets are checked against GitHub's
+   digest by `prefetch` itself. If the package runs as root or acts with the
    user's access, add it to `REVIEW` in `.github/workflows/update.yml`.
+   Give the package an install check that runs it (`--version`, or
+   `lib/check-app.py` for a macOS app bundle): building is not starting.
 2. Set `meta.platforms` to the systems it really supports; that's what filters `packages.<system>`.
    If evaluating it fetches another flake, also list it in `fixedPlatforms` in
    `flake.nix`.

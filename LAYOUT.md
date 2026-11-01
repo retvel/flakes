@@ -2,6 +2,7 @@
 
 | Path | Role |
 |---|---|
+| `SECURITY.md` | How to report a vulnerability, and the trust model: what pins, checks and sandboxes do and don't cover. Keep it in sync with the workflows, `lib/` and the modules. |
 | `flake.nix` | Discovers `pkgs/*/package.nix` and the module files; builds all packages in one `makeScope` so they can depend on each other by argument name; filters `packages.<system>` with `lib.meta.availableOn`, except for the packages in `fixedPlatforms` (they fetch Hermes' flake when evaluated). `checks` adds `formatting` (`nixfmt --check`) and, on Linux, `nixos-modules` (a NixOS system with every NixOS module enabled, evaluated). |
 | `overlays/default.nix` | `pkgs.xr3t.<name>`, built against the consumer's nixpkgs. |
 | `pkgs/<name>/package.nix` | The derivation. Read `version`/hashes from `hashes.json` for prebuilt binaries. |

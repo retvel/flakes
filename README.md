@@ -9,6 +9,9 @@ Nix packages by `Prompter`.
 > the download is unchanged, not that the program is safe. Read the package
 > definition and the upstream project before installing, especially anything
 > that runs as a system service or with root privileges.
+>
+> See [SECURITY.md](SECURITY.md) for what the pins and checks cover, and to
+> report a vulnerability.
 
 ## Packages
 

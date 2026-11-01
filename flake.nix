@@ -73,6 +73,14 @@
         lib.genAttrs (builtins.filter (name: builtins.pathExists ./pkgs/${name}/${file}) packageNames) (
           name: import ./pkgs/${name}/${file} self
         );
+      # Rolling builds: upstream replaces the file behind their URL with every
+      # build, so a pin fails its hash until the next update. Left out of
+      # checks; update.yml builds them when it bumps them.
+      rolling = [
+        "ghostty-tip"
+        "nullclaw-nightly"
+      ];
+
       # Used by checks.<system>.nixos-modules. hermes-agent is left out: it is
       # upstream's module, and evaluating it fetches upstream's flake.
       nixosModulesTest =
@@ -124,13 +132,14 @@
       nixosModules = modulesFrom "module.nix" // modulesFrom "nixos-module.nix";
       homeManagerModules = modulesFrom "home-module.nix";
 
-      # Every package, and every .nix file formatted with `nix fmt`.
+      # Every package but the rolling ones, and every .nix file formatted
+      # with `nix fmt`.
       checks = eachSystem (
         system:
         let
           pkgs = pkgsFor.${system};
         in
-        self.packages.${system}
+        removeAttrs self.packages.${system} rolling
         // {
           formatting = pkgs.runCommand "formatting" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
             find ${self} -name '*.nix' -exec nixfmt --check {} +

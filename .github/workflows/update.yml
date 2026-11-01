@@ -102,8 +102,12 @@ jobs:
               discard "$name"; return 0
             fi
             # Build every x86_64-linux package, so packages built on this
-            # one (e.g. nullclaw-nightly on nullclaw) are checked too.
-            if ! nix flake check --all-systems -L; then
+            # one (e.g. nullclaw-nightly on nullclaw) are checked too, and
+            # this one itself if checks leave it out (a rolling build).
+            if ! nix flake check --all-systems -L ||
+              { [ "$name" != nixpkgs ] &&
+                nix eval --quiet ".#packages.x86_64-linux.\"$name\".drvPath" >/dev/null 2>&1 &&
+                ! nix build --no-link -L ".#packages.x86_64-linux.\"$name\""; }; then
               echo "::error::$name failed to build after update"
               discard "$name"; failed=1; return 0
             fi

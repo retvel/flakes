@@ -68,9 +68,10 @@ nix fmt                         # nixfmt; checks.formatting fails otherwise
 Avoid `--no-build`: its read-only store fails on filtered sources that are
 read during evaluation (`hermes-agent`).
 
-Only `aarch64-darwin` builds locally; Linux is exercised by CI. To test in the
-system config, point the input in `/etc/nix-darwin` at this checkout and run
-`nh darwin build`. Only run `nh darwin switch` when asked.
+A local check builds only the host's own system; CI builds Linux x86_64,
+Linux aarch64 and macOS. To try a change in a system config, build that
+config against this checkout (`--override-input xr3t .`); don't switch to
+it unless asked.
 
 ## Workflows
 
@@ -89,9 +90,8 @@ Short imperative subject lines with no prefix. The update workflow commits as
 
 This repo is public. Commits and files must not carry private data:
 
-- No `Claude-Session:` trailers or other links to private sessions.
-- Author and committer emails are noreply addresses only
-  (`159290224+xr3t@users.noreply.github.com` for the owner).
-- No hostnames, usernames, IPs, paths or other details of the owner's machines
-  in code, comments, docs or commit messages; use `alice`, `example.com` and
-  the like in examples.
+- No links to private sessions or chats (such as an agent's session trailer).
+- Author and committer emails are noreply addresses only.
+- No hostnames, usernames, IPs, local paths or other details of anyone's
+  machines in code, comments, docs or commit messages; use `alice`,
+  `example.com` and the like in examples.

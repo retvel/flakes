@@ -35,7 +35,7 @@ jobs:
       # These run as root, filter the network, or are agents acting with the
       # user's access: their updates wait in a pull request (branch
       # update/<name>) for review instead of going straight to main.
-      REVIEW: "1mcp codex hermes-agent littlesnitch nullclaw nullclaw-nightly opencode pi rayfish"
+      REVIEW: "1mcp codex hermes-agent littlesnitch nullclaw opencode pi rayfish"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -102,7 +102,7 @@ jobs:
               discard "$name"; return 0
             fi
             # Build every x86_64-linux package, so packages built on this
-            # one (e.g. nullclaw-nightly on nullclaw) are checked too, and
+            # one (they take it as an argument) are checked too, and
             # this one itself if checks leave it out (a rolling build).
             if ! nix flake check --all-systems -L ||
               { [ "$name" != nixpkgs ] &&

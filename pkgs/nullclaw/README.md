@@ -1,22 +1,16 @@
 # nullclaw
 
 A Nix package for [NullClaw](https://github.com/nullclaw/nullclaw), a small,
-fully autonomous AI assistant shipped as one static Zig binary. Two packages
-share this `package.nix`:
-
-- `nullclaw`: the latest tagged release (`version` in `hashes.json`).
-- `nullclaw-nightly`: upstream's rolling `nightly` prerelease
-  (`version` in `../nullclaw-nightly/hashes.json`, as `YYYYMMDD-<commit>`).
-
-Both use upstream prebuilt release binaries and do not compile NullClaw
-locally. They have SHA-256 checksums for:
+fully autonomous AI assistant shipped as one static Zig binary: the latest
+tagged release (`version` in `hashes.json`), from upstream's prebuilt release
+binaries, not compiled locally. It has SHA-256 checksums for:
 
 - Apple Silicon macOS (`aarch64-darwin`)
 - ARM64 Linux (`aarch64-linux`)
 - x86_64 Linux (`x86_64-linux`)
 
 The Linux binaries are statically linked against musl, so they run on NixOS
-without patching. Both packages install `bin/nullclaw`; install one of them.
+without patching.
 
 ## Usage
 
@@ -26,33 +20,19 @@ without patching. Both packages install `bin/nullclaw`; install one of them.
   inputs.xr3t.inputs.nixpkgs.follows = "nixpkgs";
 
   environment.systemPackages = [ inputs.xr3t.packages.${system}.nullclaw ];
-  # or: inputs.xr3t.packages.${system}.nullclaw-nightly
 }
 ```
 
-Through the overlay: `pkgs.xr3t.nullclaw`, `pkgs.xr3t.nullclaw-nightly`.
+Through the overlay: `pkgs.xr3t.nullclaw`.
 
 Or run it without installing:
 
 ```sh
 nix run github:xr3t/flakes#nullclaw -- --version
-nix run github:xr3t/flakes#nullclaw-nightly -- --version
 ```
 
 Configuration lives in `~/.nullclaw`, as upstream documents; start with
 `nullclaw onboard`.
-
-## Nightly
-
-Upstream rebuilds the `nightly` release in place: every day it replaces the
-assets under the same file names. The pinned hashes therefore go stale as soon
-as upstream publishes (its build starts at 02:23 UTC) and stay stale until this repo's next
-update (03:17 or 15:17 UTC) commits the new ones.
-
-While they are stale, a build that has to download the binary fails with a
-hash mismatch. A binary already in your Nix store keeps working. So run
-`nix flake update xr3t` before rebuilding, and use `nullclaw` if you need
-builds of an older lock to keep working.
 
 ## Service
 
@@ -77,7 +57,6 @@ ran it, which goes stale on update and disappears on GC):
 
     services.nullclaw = {
       enable = true;
-      # package = inputs.xr3t.packages.${system}.nullclaw-nightly;
     };
   };
 
@@ -103,7 +82,7 @@ services.nullclaw.settings = {
 | Option | Default | Description |
 |---|---|---|
 | `services.nullclaw.enable` | `false` | Run the gateway and put `nullclaw` on `PATH`. |
-| `services.nullclaw.package` | `nullclaw` | Package to run; `nullclaw-nightly` works too. |
+| `services.nullclaw.package` | `nullclaw` | Package to run. |
 | `services.nullclaw.stateDir` | `~/.nullclaw` | `NULLCLAW_HOME`: `config.json`, `auth.json`, workspace, logs. |
 | `services.nullclaw.settings` | `{ }` | Merged into `config.json` before every start (objects key by key, Nix wins; lists replaced), so the keys Nix sets always apply and the rest stays as `nullclaw onboard` wrote it. Not for tokens or API keys: the store is world-readable. |
 | `services.nullclaw.environmentFile` | `<stateDir>/.env` on Linux, `null` on macOS | `KEY=value` file for the gateway (e.g. API keys); skipped if missing. Upstream's Linux unit loads `.env`, its macOS agent doesn't. |
@@ -176,21 +155,15 @@ no sandbox; leave it off if the agent has to administer the machine (with
 
 ## Updates
 
-Each package has an `update.sh`, run by the repo's daily workflow:
-
-- `nullclaw/update.sh` bumps to the latest upstream release.
-- `nullclaw-nightly/update.sh` reads the nightly's version from its release
-  notes and its hashes from the per-asset `.sha256` files. It exits cleanly
-  when upstream is mid-upload.
-
-Both run as agents with your access, so the workflow opens a pull request
-for their updates instead of committing to `main`. Consumers pick them up
+`update.sh` bumps to the latest upstream release, run by the repo's update
+workflow. NullClaw runs as an agent with your access, so the workflow opens a
+pull request for its updates instead of committing to `main`. Consumers pick them up
 with `nix flake update xr3t`.
 
 ## Outputs
 
-- `packages.<system>.nullclaw`, `packages.<system>.nullclaw-nightly`
-- `pkgs.xr3t.nullclaw`, `pkgs.xr3t.nullclaw-nightly` through `overlays.default`
+- `packages.<system>.nullclaw`
+- `pkgs.xr3t.nullclaw` through `overlays.default`
 - `homeManagerModules.nullclaw`: the `services.nullclaw` user service
 - `nixosModules.nullclaw`, `darwinModules.nullclaw`: only a pointer to the Home
   Manager module, for configs that still set the old system service

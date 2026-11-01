@@ -1,10 +1,16 @@
 self:
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 let
   cfg = config.services.littlesnitch;
-in {
+in
+{
   options.services.littlesnitch = {
     enable = mkEnableOption "the Little Snitch for Linux network monitor daemon";
     package = mkOption {

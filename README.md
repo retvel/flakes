@@ -63,7 +63,8 @@ Or run one without installing: `nix run github:xr3t/flakes#rayfish -- --version`
 - `darwinModules.<name>`, `nixosModules.<name>`: for packages that have a
   `module.nix` (both), `darwin-module.nix` or `nixos-module.nix` (one only)
 - `homeManagerModules.<name>`: for packages that have a `home-module.nix`
-- `checks.<system>.<name>`: builds every package
+- `checks.<system>.<name>`: builds every package; `checks.<system>.formatting`
+  checks that every `.nix` file is formatted
 - `formatter`: `nixfmt`
 
 Systems: `aarch64-darwin`, `aarch64-linux`, `x86_64-linux`.

@@ -15,6 +15,8 @@ See `LAYOUT.md`; keep it in sync when adding a kind of file or workflow.
    through `check_version`. If the package runs as root or acts with the
    user's access, add it to `REVIEW` in `.github/workflows/update.yml`.
 2. Set `meta.platforms` to the systems it really supports; that's what filters `packages.<system>`.
+   If evaluating it fetches another flake, also list it in `fixedPlatforms` in
+   `flake.nix`.
 3. Add a row to the README package table and a `pkgs/<name>/README.md` if it has options.
    Package-specific notes (gotchas, what to recheck on a bump) go in that README
    or as comments in the package's own files, not in this file.
@@ -25,6 +27,7 @@ See `LAYOUT.md`; keep it in sync when adding a kind of file or workflow.
 ```sh
 nix flake check --all-systems   # evaluate everything, build this host's packages
 nix build .#<name> && ./result/bin/<prog> --version
+nix fmt                         # nixfmt; checks.formatting fails otherwise
 ```
 
 Avoid `--no-build`: its read-only store fails on filtered sources that are

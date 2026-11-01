@@ -1,11 +1,17 @@
 self:
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 let
   cfg = config.services."1mcp";
   home = config.users.users.${cfg.user}.home;
-in {
+in
+{
   options.services."1mcp" = {
     enable = mkEnableOption "the 1MCP runtime (aggregates MCP servers behind one HTTP endpoint)";
     package = mkOption {
@@ -65,7 +71,10 @@ in {
     extraArgs = mkOption {
       type = types.listOf types.str;
       default = [ ];
-      example = [ "--enable-config-reload" "--enable-async-loading" ];
+      example = [
+        "--enable-config-reload"
+        "--enable-async-loading"
+      ];
       description = "Extra `1mcp serve` arguments.";
     };
   };
@@ -105,7 +114,10 @@ in {
             "--port"
             (toString cfg.port)
           ]
-          ++ optionals (cfg.externalUrl != null) [ "--external-url" cfg.externalUrl ]
+          ++ optionals (cfg.externalUrl != null) [
+            "--external-url"
+            cfg.externalUrl
+          ]
           ++ optional cfg.enableAuth "--enable-auth"
           ++ cfg.extraArgs
         );

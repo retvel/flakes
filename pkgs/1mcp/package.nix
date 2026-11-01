@@ -1,4 +1,12 @@
-{ lib, stdenv, stdenvNoCC, fetchurl, autoPatchelfHook, glibc, libgcc }:
+{
+  lib,
+  stdenv,
+  stdenvNoCC,
+  fetchurl,
+  autoPatchelfHook,
+  glibc,
+  libgcc,
+}:
 
 let
   # Version and per-system hashes live in hashes.json so update.sh can rewrite
@@ -33,7 +41,11 @@ stdenvNoCC.mkDerivation {
 
   nativeBuildInputs = lib.optional isLinux autoPatchelfHook;
   # Node needs libstdc++ (stdenv.cc.cc.lib), not just libgcc.
-  buildInputs = lib.optionals isLinux [ glibc libgcc stdenv.cc.cc.lib ];
+  buildInputs = lib.optionals isLinux [
+    glibc
+    libgcc
+    stdenv.cc.cc.lib
+  ];
 
   installPhase = ''
     install -Dm755 "1mcp-${asset}" "$out/bin/1mcp"

@@ -1,5 +1,11 @@
 self:
-{ config, options, lib, pkgs, ... }:
+{
+  config,
+  options,
+  lib,
+  pkgs,
+  ...
+}:
 
 # One module for both nix-darwin (launchd) and NixOS (systemd). The platform is
 # detected from the declared options rather than `pkgs`, which would recurse.
@@ -48,7 +54,8 @@ let
         [ -z "$peer" ] || ensure_route "$peer"
       done
   '';
-in {
+in
+{
   options.services.rayfish = {
     enable = mkEnableOption "Rayfish mesh VPN";
     package = mkOption {

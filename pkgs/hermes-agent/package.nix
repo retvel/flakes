@@ -17,7 +17,7 @@ let
   };
 in
 hermes.overrideAttrs (old: {
-  # Built and cached for the NixOS host only.
+  # Built and cached for x86_64-linux only.
   meta = old.meta // {
     platforms = [ "x86_64-linux" ];
   };

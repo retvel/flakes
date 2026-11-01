@@ -34,9 +34,6 @@ Nix packages by `Prompter`.
 | [opencode](pkgs/opencode) | OpenCode 2 AI coding agent from upstream's prebuilt npm release, kept on Nix (no self-update); Apple Silicon macOS and Linux, no compilation |
 | [rayfish](pkgs/rayfish) | P2P mesh VPN (iroh), with a nix-darwin/NixOS service module |
 | [utm](pkgs/utm) | UTM virtual machine host for macOS from the upstream release dmg, no compilation |
-| [webapp-claude](pkgs/webapp-claude) | claude.ai as a macOS app, built with Pake by this repo's CI and published as a release; Apple Silicon only, no compilation |
-| [webapp-chatgpt](pkgs/webapp-chatgpt) | ChatGPT as a macOS app, built the same way |
-| [webapp-discord](pkgs/webapp-discord) | Discord's web client as a macOS app, built the same way |
 
 ## Usage
 

@@ -25,7 +25,7 @@ repo's or the consumer's nixpkgs (the overlay gives the same store path).
 - `version` is set from `hashes.json`; upstream's Nix package otherwise
   reports `0.0.0`.
 - `meta.platforms` is `x86_64-linux` only, so other CI runners skip the build
-  and the Cachix cache only holds the NixOS host's closure.
+  and the Cachix cache only holds its x86_64-linux closure.
 
 ## Usage
 

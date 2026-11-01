@@ -35,3 +35,12 @@ system config, point the input in `/etc/nix-darwin` at this checkout and run
 
 Short imperative subject lines with no prefix. The update workflow commits as
 `Update <name> to vX.Y.Z`.
+
+This repo is public. Commits and files must not carry private data:
+
+- No `Claude-Session:` trailers or other links to private sessions.
+- Author and committer emails are noreply addresses only
+  (`159290224+retvel@users.noreply.github.com` for the owner).
+- No hostnames, usernames, IPs, paths or other details of the owner's machines
+  in code, comments, docs or commit messages; use `alice`, `example.com` and
+  the like in examples.

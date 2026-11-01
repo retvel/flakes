@@ -37,6 +37,11 @@ fixes; there are no release branches.
   hash. Every upstream version goes through `check_version`
   (`lib/update.sh`) before it reaches a URL, `hashes.json` or a commit
   message.
+- **Dependency advisories.** Where a package installs its npm dependencies
+  from upstream's lock (`pi`), dependencies with published advisories are
+  raised to fixed versions through `overrides.json`, after checking that the
+  package's use of them still works; the build checks it again. They drop out
+  once upstream ships the fix.
 - **Rolling builds.** `ghostty-tip` and `nullclaw-nightly` follow upstream
   builds that are replaced in place. Their pins only download until the next
   build.

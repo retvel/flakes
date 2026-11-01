@@ -5,15 +5,15 @@
 # shipped untagged), and obdev.at drops old tarballs once a new one is out.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
 base=https://obdev.at/downloads/littlesnitch-linux
 
 version="$(curl -fsSL https://obdev.at/products/littlesnitch-linux/download.html \
   | grep -oE 'littlesnitch-[0-9]+(\.[0-9]+)+-amd64-linux-musl\.tar\.gz' \
   | sed -E 's/^littlesnitch-(.*)-amd64-linux-musl\.tar\.gz$/\1/' | sort -uV | tail -n1)"
-[ -n "$version" ] || { echo "littlesnitch: no tarball on the download page" >&2; exit 1; }
-current="$(jq -r .version hashes.json)"
-[ "$version" != "$current" ] || { echo "littlesnitch: $current is latest"; exit 0; }
+check_version littlesnitch "$version"
+skip_if_current littlesnitch "$version"
 
 declare -A arches=(
   [aarch64-linux]=arm64
@@ -26,7 +26,7 @@ sums="$(curl -fsSL "$base/littlesnitch-$version.hashes.txt")"
 hashes='{}'
 for system in "${!arches[@]}"; do
   file="littlesnitch-$version-${arches[$system]}-linux-musl.tar.gz"
-  hash="$(nix store prefetch-file --json "$base/$file" | jq -r .hash)"
+  hash="$(prefetch "$base/$file")"
   want="$(awk -v f="$file" '$2 == f { print $1 }' <<<"$sums")"
   [ "$(nix hash convert --hash-algo sha256 --to base16 "$hash")" = "$want" ] \
     || { echo "littlesnitch: $file does not match $version.hashes.txt" >&2; exit 1; }

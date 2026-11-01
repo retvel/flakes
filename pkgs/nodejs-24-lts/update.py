@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Pin official Node 24 LTS archives using upstream SHA-256 checksums."""
+"""Pin official Node 24 LTS archives using upstream's signed SHA-256 checksums."""
 import base64
 import json
 import pathlib
 import re
+import subprocess
+import tempfile
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent
@@ -12,11 +14,33 @@ TARGETS = {
     "aarch64-linux": "linux-arm64",
     "x86_64-linux": "linux-x64",
 }
+# Node's active release keys, from a second source (GitHub) than the
+# checksums (nodejs.org): SHASUMS256.txt must carry a good signature by one
+# of them. https://github.com/nodejs/release-keys
+RELEASE_KEYS = "https://raw.githubusercontent.com/nodejs/release-keys/HEAD/gpg-only-active-keys/pubring.kbx"
 
 
 def fetch(url):
     with urllib.request.urlopen(url, timeout=60) as response:
         return response.read()
+
+
+def verified_checksums(version):
+    base = f"https://nodejs.org/dist/v{version}/SHASUMS256.txt"
+    checksums = fetch(base)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = pathlib.Path(tmp)
+        (tmp / "keys.kbx").write_bytes(fetch(RELEASE_KEYS))
+        (tmp / "SHASUMS256.txt").write_bytes(checksums)
+        (tmp / "SHASUMS256.txt.sig").write_bytes(fetch(base + ".sig"))
+        result = subprocess.run(
+            ["gpgv", "--keyring", str(tmp / "keys.kbx"),
+             str(tmp / "SHASUMS256.txt.sig"), str(tmp / "SHASUMS256.txt")],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            raise ValueError(f"SHASUMS256.txt for {version} has no good release-key signature:\n{result.stderr}")
+    return checksums.decode()
 
 
 def main():
@@ -30,6 +54,8 @@ def main():
     current_data = json.loads(path.read_text()) if path.exists() else {}
     current = current_data.get("version")
     npm = json.loads(fetch("https://registry.npmjs.org/npm/latest"))
+    if not re.fullmatch(r"\d+\.\d+\.\d+", npm["version"]):
+        raise ValueError(f"Unexpected npm version {npm['version']!r}")
     engine = npm["engines"]["node"]
     node_version = tuple(map(int, version.split(".")))
     compatible = False
@@ -52,7 +78,7 @@ def main():
         print(f"nodejs-24-lts: Node {version}, npm {npm['version']} are latest")
         return
 
-    checksums = fetch(f"https://nodejs.org/dist/v{version}/SHASUMS256.txt").decode()
+    checksums = verified_checksums(version)
     sums = {}
     for line in checksums.splitlines():
         digest, filename = line.split()

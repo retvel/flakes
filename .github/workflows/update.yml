@@ -12,25 +12,37 @@ on:
         required: false
         default: ""
 
+# One run at a time, so a manual run waits for a scheduled one instead of
+# racing its push.
+concurrency:
+  group: update
+  cancel-in-progress: false
+
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      # Only whether the secret is set; the token itself goes to the push step.
+      HAS_CACHIX: ${{ secrets.CACHIX_AUTH_TOKEN != '' }}
+      # These run as root, filter the network, or are agents acting with the
+      # user's access: their updates wait in a pull request (branch
+      # update/<name>) for review instead of going straight to main.
+      REVIEW: "1mcp codex hermes-agent littlesnitch nullclaw opencode pi rayfish"
     steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v31
-      # Pull from ret.cachix.org once the token secret exists. Nothing is
-      # pushed automatically; only hermes-agent is, by the step below.
-      - uses: cachix/cachix-action@v15
-        if: env.CACHIX_AUTH_TOKEN != ''
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Full history, so the rebase before the push always finds its base.
+          fetch-depth: 0
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+      # Pull from ret.cachix.org, which is public: no token needed.
+      - uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: ret
-          authToken: ${{ env.CACHIX_AUTH_TOKEN }}
           skipPush: true
 
       - name: Update packages
@@ -39,25 +51,79 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Puts a checked update on update/<name>, on top of main, and opens
+          # (or retitles) its pull request. Pull requests opened with this
+          # token don't start check.yml; the update was checked here already.
+          propose() {
+            local name=$1 version=$2 branch="update/$1" commit
+            git add -A -- "pkgs/$name"
+            git commit -qm "Update $name to v$version"
+            commit="$(git rev-parse HEAD)"
+            git reset -q --hard HEAD~1
+            git switch -q --detach origin/main
+            git cherry-pick "$commit" >/dev/null
+            git push -qf origin "HEAD:refs/heads/$branch"
+            git switch -q main
+            if [ "$(gh pr view "$branch" --json state -q .state 2>/dev/null)" = OPEN ]; then
+              gh pr edit "$branch" --title "Update $name to v$version" >/dev/null
+            else
+              gh pr create --head "$branch" --base main --title "Update $name to v$version" \
+                --body "Automated update of \`$name\`, built by the Update workflow. Read the upstream release before merging." \
+                || { echo "::error::$name: could not open a pull request (Settings → Actions → allow GitHub Actions to create pull requests)"; failed=1; }
+            fi
+          }
+
+          # Whether update/<name> already holds exactly this update.
+          proposed() {
+            git fetch -q origin "update/$1" 2>/dev/null || return 1
+            git diff --quiet FETCH_HEAD -- "pkgs/$1" &&
+              [ -z "$(git ls-files --others --exclude-standard -- "pkgs/$1")" ]
+          }
+
+          # Drops what a failed update left in pkgs/<name>.
+          discard() { git checkout -q -- "pkgs/$1"; git clean -fdq -- "pkgs/$1"; }
+
+          failed=0
           for script in pkgs/*/update.sh; do
             name="$(basename "$(dirname "$script")")"
             if [ -n "${PACKAGES:-}" ] && [[ " $PACKAGES " != *" $name "* ]]; then continue; fi
-            "$script"
-            git diff --quiet -- "pkgs/$name" && continue
+            # A failing script (upstream down, unexpected data) skips only its
+            # own package.
+            if ! "$script"; then
+              echo "::error::$name: update.sh failed"
+              discard "$name"; failed=1; continue
+            fi
+            [ -n "$(git status --porcelain -- "pkgs/$name")" ] || continue
             version="$(jq -r .version "pkgs/$name/hashes.json" 2>/dev/null || echo new)"
+            review=false
+            [[ " $REVIEW " != *" $name "* ]] || review=true
+            if $review && proposed "$name"; then
+              echo "$name: v$version is already proposed on update/$name"
+              discard "$name"; continue
+            fi
             # Build every x86_64-linux package, so packages built on this one
             # (e.g. nullclaw-nightly on nullclaw) are checked too.
-            if nix flake check --all-systems -L; then
-              git commit -m "Update $name to v$version" -- "pkgs/$name"
-            else
+            if ! nix flake check --all-systems -L; then
               echo "::error::$name failed to build after update"
-              git checkout -- "pkgs/$name"
+              discard "$name"; failed=1; continue
+            fi
+            if $review; then
+              propose "$name" "$version"
+            else
+              git add -A -- "pkgs/$name"
+              git commit -qm "Update $name to v$version"
             fi
           done
-          git push
 
-      # Only hermes-agent's runtime closure, for the NixOS host; paths already
-      # on cache.nixos.org are skipped.
+          git pull -q --rebase origin main
+          git push -q origin HEAD:main
+          exit "$failed"
+
+      # Only hermes-agent's runtime closure, as main now has it; paths already
+      # on cache.nixos.org are skipped. Runs after a failed update too.
       - name: Push hermes-agent to Cachix
-        if: env.CACHIX_AUTH_TOKEN != ''
+        if: ${{ !cancelled() && env.HAS_CACHIX == 'true' }}
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
         run: nix build .#hermes-agent --no-link --print-out-paths | cachix push ret

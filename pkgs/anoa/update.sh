@@ -2,23 +2,13 @@
 # Bump hashes.json to the latest upstream release. Needs gh, jq and nix.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
-latest="$(gh release view -R porcupine-md/anoa-browser --json tagName -q .tagName)"
-version="${latest#v}"
-current="$(jq -r .version hashes.json 2>/dev/null || echo none)"
-[ "$version" != "$current" ] || { echo "anoa: $current is latest"; exit 0; }
+version="$(gh_latest anoa porcupine-md/anoa-browser)"
+skip_if_current anoa "$version"
 
-declare -A assets=(
-  [aarch64-linux]=linux-aarch64
-  [x86_64-linux]=linux-x86_64
-)
-
-hashes='{}'
-for system in "${!assets[@]}"; do
-  hash="$(nix store prefetch-file --json \
-    "https://github.com/porcupine-md/anoa-browser/releases/download/v$version/anoa-${assets[$system]}.tar.gz" | jq -r .hash)"
-  hashes="$(jq --arg s "$system" --arg h "$hash" '. + {($s): $h}' <<<"$hashes")"
-done
-
-jq -n --arg v "$version" --argjson h "$hashes" '{version: $v, hashes: ($h | to_entries | sort_by(.key) | from_entries)}' > hashes.json
+base="https://github.com/porcupine-md/anoa-browser/releases/download/v$version"
+write_hashes "$version" \
+  aarch64-linux="$base/anoa-linux-aarch64.tar.gz" \
+  x86_64-linux="$base/anoa-linux-x86_64.tar.gz"
 echo "anoa: $current -> $version"

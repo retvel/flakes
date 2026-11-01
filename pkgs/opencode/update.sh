@@ -5,11 +5,11 @@
 # downloaded. Needs curl and jq.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
 version="$(curl -fsS https://registry.npmjs.org/@opencode%2fcli/latest | jq -r '.version // empty')"
-[ -n "$version" ] || { echo "opencode: no latest version on npm" >&2; exit 1; }
-current="$(jq -r .version hashes.json)"
-[ "$version" != "$current" ] || { echo "opencode: $current is latest"; exit 0; }
+check_version opencode "$version" '^[0-9]+\.[0-9]+\.[0-9]+$'
+skip_if_current opencode "$version"
 
 integrity() { curl -fsS "https://registry.npmjs.org/@opencode%2fcli-$1/$version" | jq -er .dist.integrity; }
 jq -n --arg v "$version" \

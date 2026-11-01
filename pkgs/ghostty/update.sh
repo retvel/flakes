@@ -5,17 +5,15 @@
 # the dmg (~35 MB) on a bump to hash it. Needs curl, jq and nix.
 set -euo pipefail
 cd "$(dirname "$0")"
+. ../../lib/update.sh
 
 base=https://release.files.ghostty.org
 
 version="$(curl -fsSL "$base/appcast.xml" \
   | grep -oE '<sparkle:shortVersionString>[0-9]+\.[0-9]+\.[0-9]+<' \
   | sed -E 's/.*>([0-9.]+)</\1/' | sort -V | tail -n1)"
-[ -n "$version" ] || { echo "ghostty: no release version in the appcast" >&2; exit 1; }
+check_version ghostty "$version"
+skip_if_current ghostty "$version"
 
-current="$(jq -r .version hashes.json)"
-[ "$version" != "$current" ] || { echo "ghostty: $current is latest"; exit 0; }
-
-hash="$(nix store prefetch-file --json "$base/$version/Ghostty.dmg" | jq -r .hash)"
-jq -n --arg v "$version" --arg h "$hash" '{version: $v, hashes: {"Ghostty.dmg": $h}}' > hashes.json
+write_hashes "$version" Ghostty.dmg="$base/$version/Ghostty.dmg"
 echo "ghostty: $current -> $version"

@@ -93,19 +93,21 @@
               };
               system.stateVersion = "25.11";
               users.users.alice.isNormalUser = true;
-              services."1mcp" = {
-                enable = true;
-                user = "alice";
-                settings.mcpServers = { };
-              };
               programs.herdr.enable = true;
-              services.littlesnitch.enable = true;
-              services.nullclaw = {
-                enable = true;
-                user = "alice";
-                watchdog.enable = true;
+              services = {
+                "1mcp" = {
+                  enable = true;
+                  user = "alice";
+                  settings.mcpServers = { };
+                };
+                littlesnitch.enable = true;
+                nullclaw = {
+                  enable = true;
+                  user = "alice";
+                  watchdog.enable = true;
+                };
+                rayfish.enable = true;
               };
-              services.rayfish.enable = true;
             }
           ];
         };

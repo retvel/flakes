@@ -34,16 +34,20 @@ let
 
   # Merges `settings` into config.json before each start: Nix's values win,
   # and everything else (what `nullclaw onboard` wrote, tokens included)
-  # stays. Written next to it and renamed, so a failed merge leaves it as it
-  # was; umask 077, as config.json holds credentials.
+  # stays. Written next to the real file and renamed onto it, so a failed
+  # merge leaves it as it was, and a config.json that is a symlink (e.g. Home
+  # Manager's mkOutOfStoreSymlink into a config repo) stays one: the merge
+  # lands in the file it points to. umask 077, as it holds credentials.
   mergeSettings = pkgs.writeShellScript "nullclaw-merge-settings" ''
     set -eu
     umask 077
-    config=${lib.escapeShellArg "${cfg.stateDir}/config.json"}
+    link=${lib.escapeShellArg "${cfg.stateDir}/config.json"}
     mkdir -p ${lib.escapeShellArg cfg.stateDir}
+    config="$(${pkgs.coreutils}/bin/realpath -m "$link")"
     if [ -e "$config" ]; then
       ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$config" ${settingsFile} > "$config.nix-tmp"
     else
+      mkdir -p "$(dirname "$config")"
       cat ${settingsFile} > "$config.nix-tmp"
     fi
     mv "$config.nix-tmp" "$config"

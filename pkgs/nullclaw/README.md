@@ -112,6 +112,12 @@ services.nullclaw.settings = {
 | `services.nullclaw.hardening.enable` | `false` | Filesystem read-only except `stateDir`, no privilege gain (see below). Not upstream's; Linux only. |
 | `services.nullclaw.hardening.readWritePaths` | `[ ]` | Extra writable paths besides `stateDir`. |
 
+`config.json` can also live in your config repo as a live symlink
+(`home.file.".nullclaw/config.json".source = config.lib.file.mkOutOfStoreSymlink ...`);
+`settings` then merges into the file it points to and leaves the link in
+place. `nullclaw onboard` writes tokens into `config.json`: in a public repo,
+keep them in `environmentFile` instead.
+
 Run `nullclaw onboard` first, so `stateDir` exists. After editing
 `config.json`, restart the service: `nullclaw config reload` only validates.
 

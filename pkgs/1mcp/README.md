@@ -40,7 +40,7 @@ The attribute name starts with a digit, so quote it:
 | `enable` | `false` | Run `1mcp serve` as a systemd service. |
 | `package` | this flake's package | 1MCP package to run. |
 | `user` | (required) | User the runtime and its MCP servers run as, with that user's PATH (so `npx`/`uvx` servers work). |
-| `configDir` | `~<user>/.config/1mcp` | Config directory. Unless `settings` is set, `mcp.json` is created empty on first start and never overwritten, so edit it in place. |
+| `configDir` | `~<user>/.config/1mcp` | Config directory. Unless `settings` is set, `mcp.json` is created empty on first start and never overwritten, so edit it in place or link it from your config repo (Home Manager's `mkOutOfStoreSymlink`, or `systemd.tmpfiles` `L+`). |
 | `settings` | `null` | The MCP servers as Nix (`{ mcpServers = { ... }; }`), written to the store and used in place of `configDir`'s `mcp.json`. The store is world-readable: keep API keys in `environmentFile`. |
 | `host` | `127.0.0.1` | Listen address. Keep it on loopback and put a TLS proxy in front. |
 | `port` | `3050` | HTTP port. |

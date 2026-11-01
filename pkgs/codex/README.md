@@ -52,8 +52,10 @@ set), and the wrapper passes `-c check_for_update_on_startup=false`, so it
 doesn't look for or announce newer releases either: updates come through this
 flake. It also passes `-c analytics.enabled=false`: no usage analytics.
 Each flag is only added while `config.toml` doesn't set that key, so your
-config (or Home Manager's `programs.codex.settings`) decides once it does,
-e.g. `settings.analytics.enabled = true`.
+config decides once it does, e.g. `settings.analytics.enabled = true`. That
+works the same whether `config.toml` comes from Home Manager's
+`programs.codex.settings` or is your own file linked in with
+`mkOutOfStoreSymlink` (then leave `programs.codex.settings` unset).
 
 `codex app-server daemon` would copy the running package into
 `$CODEX_HOME/packages/app-server-daemon/releases` and keep that copy updated

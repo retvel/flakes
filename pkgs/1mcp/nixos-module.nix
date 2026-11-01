@@ -104,12 +104,14 @@ in
     };
     hardening.enable = mkOption {
       type = types.bool;
-      default = true;
+      default = false;
       description = ''
         Confine the runtime and every MCP server it starts with systemd
         sandboxing: no privilege gain (setuid, so no sudo), a private /tmp,
         /usr, /boot and /etc read-only, kernel tunables and modules
         protected. The user's home stays writable, so npx/uvx caches work.
+        Off by default: upstream ships no service, and MCP servers may need
+        more than this allows.
       '';
     };
     extraArgs = mkOption {

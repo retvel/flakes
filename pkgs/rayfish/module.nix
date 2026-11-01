@@ -124,12 +124,15 @@ in
         '';
       };
 
+      # Upstream's plist (what `ray up` writes to
+      # /Library/LaunchDaemons/com.rayfish.vpn.plist), the binary in the store.
+      # Recheck it in the release when bumping rayfish.
       launchd.daemons.rayfish = {
         serviceConfig = {
           Label = "com.rayfish.vpn";
-          # LaunchDaemons can start before the Nix store is mounted during
-          # boot. Wait from the system shell instead of letting launchd cache a
-          # missing executable and mark the job failed.
+          # The one change for Nix: LaunchDaemons can start before the Nix
+          # store is mounted during boot, so wait for it from the system shell
+          # instead of letting launchd cache a missing executable.
           ProgramArguments = [
             "/bin/sh"
             "-c"
@@ -139,12 +142,7 @@ in
             ''
           ];
           RunAtLoad = true;
-          # Restart after a failed daemon exit instead of leaving the service in
-          # launchd's penalty box.
-          KeepAlive = {
-            SuccessfulExit = false;
-          };
-          ThrottleInterval = 10;
+          KeepAlive = true;
           StandardOutPath = "/var/log/rayfish.log";
           StandardErrorPath = "/var/log/rayfish.log";
         }
@@ -157,20 +155,31 @@ in
     (optionalAttrs (!isDarwin) {
       services.resolved.enable = mkIf cfg.resolver.enable (mkDefault true);
 
+      # Upstream's unit (what `ray up` writes to
+      # /etc/systemd/system/rayfish.service), the binary in the store. Recheck
+      # it in the release when bumping rayfish.
       systemd.services.rayfish = {
-        description = "Rayfish mesh VPN daemon";
+        description = "rayfish P2P mesh VPN";
         wantedBy = [ "multi-user.target" ];
         wants = [ "network-online.target" ];
-        after = [ "network-online.target" ];
-        # Root, for its TUN device, routes and resolver, so only the shared
-        # sandbox: it can't gain more through setuid, and the clock, kernel
-        # logs and cgroups are protected. Narrowing its capabilities and
-        # filesystem needs testing against a live mesh first.
-        serviceConfig = import ../../lib/hardening.nix // {
+        # Ordered after the network managers so that at shutdown rayfish
+        # stops, and hands DNS back, while they are still running.
+        after = [
+          "network-pre.target"
+          "network-online.target"
+          "NetworkManager.service"
+          "systemd-resolved.service"
+        ];
+        serviceConfig = {
+          Type = "simple";
           ExecStart = "${cfg.package}/libexec/rayfish/ray daemon";
+          # Undo DNS and exit-node changes when the daemon died without its
+          # own teardown. The leading "-" keeps a failed cleanup from failing
+          # the unit.
+          ExecStopPost = "-${cfg.package}/libexec/rayfish/ray daemon --cleanup";
           Restart = "on-failure";
           RestartSec = 5;
-          User = "root";
+          TimeoutStopSec = 20;
         };
         environment = optionalAttrs (cfg.logFilter != null) { RUST_LOG = cfg.logFilter; };
       };

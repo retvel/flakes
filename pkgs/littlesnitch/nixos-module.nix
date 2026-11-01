@@ -30,12 +30,6 @@ in
     # bump picks up upstream's changes. State, rules and web UI overrides
     # live in /var/lib/littlesnitch (the daemon creates it).
     systemd.packages = [ cfg.package ];
-    systemd.services.littlesnitch = {
-      wantedBy = [ "multi-user.target" ];
-      # Its AssertCapability= lines test systemd's own capability set, which
-      # is smaller in some containers; CapabilityBoundingSet= still limits
-      # what the daemon gets.
-      unitConfig.AssertCapability = "";
-    };
+    systemd.services.littlesnitch.wantedBy = [ "multi-user.target" ];
   };
 }

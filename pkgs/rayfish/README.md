@@ -56,13 +56,13 @@ detects nix-darwin from the `launchd` option.
 ## Service
 
 - **macOS:** launchd daemon `com.rayfish.vpn`, logging to
-  `/var/log/rayfish.log`. It waits for the Nix store to be mounted at boot and
-  restarts after a failed exit.
-- **NixOS:** systemd unit `rayfish.service`, started after
-  `network-online.target` and restarted on failure. It runs as root (TUN
-  device, routes, resolver) with the flake's shared sandbox
-  (`lib/hardening.nix`: no privilege gain through setuid; clock, kernel logs
-  and cgroups protected).
+  `/var/log/rayfish.log`, upstream's plist (`KeepAlive`), except that it waits
+  for the Nix store to be mounted at boot.
+- **NixOS:** systemd unit `rayfish.service`, upstream's unit (`ray up`'s) with
+  the binary in the store: ordered after the network managers, restarted on
+  failure, and `ray daemon --cleanup` on stop to undo DNS and exit-node
+  changes the daemon left behind. Like upstream, it runs as root with no
+  sandbox.
 
 Both run the binary straight from the Nix store.
 

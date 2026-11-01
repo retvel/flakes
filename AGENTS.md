@@ -22,6 +22,13 @@ See `LAYOUT.md`; keep it in sync when adding a kind of file or workflow.
    or as comments in the package's own files, not in this file.
 4. `git add` new files; flakes ignore untracked files.
 
+## Modules
+
+Run a service as upstream's own installer does (its unit or plist, recheck it
+on a bump), with the binary in the store and its self-update off: Nix makes
+it declarative, it doesn't change how it behaves. Anything beyond that, such
+as a sandbox upstream doesn't ship, is an option that is off by default.
+
 ## Checking changes
 
 ```sh

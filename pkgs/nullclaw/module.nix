@@ -122,7 +122,7 @@ in
     hardening = {
       enable = mkOption {
         type = types.bool;
-        default = true;
+        default = false;
         description = ''
           Confine the gateway and every command its agent runs with systemd
           sandboxing: the whole filesystem read-only except `stateDir` (and a
@@ -131,7 +131,8 @@ in
           does nothing useful on NixOS (Landlock is a stub upstream, and
           firejail/bubblewrap/docker hide the host), so this is the
           enforcement. Network, processes and devices stay visible, so the
-          agent can still monitor the machine. On by default: the agent runs
+          agent can still monitor the machine. Off by default, like upstream,
+          whose service has no sandbox; worth turning on, as the agent runs
           commands chosen by a model and reachable from chat. NixOS only.
         '';
       };

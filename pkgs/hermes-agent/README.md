@@ -108,7 +108,9 @@ without a git checkout it would follow upstream's main branch and always
 report an update. Hermes refuses `hermes update --set-channel` on Nix, so
 each switch writes the `update.installs.<id>` record for the current store
 path to `config.yaml` (`stable-channel.py`). A new release shows as "Update
-available"; take it with `nix flake update xr3t` and a rebuild.
+available"; take it with `nix flake update xr3t` and a rebuild. With `config.yaml`
+linked from a config repo, that record (and upstream's merge of `settings`)
+lands in the repo's file on every switch.
 
 Set `services.hermes-agent.nixManagesConfig = true` for upstream's managed
 mode instead: the CLI refuses config changes, and the services see only

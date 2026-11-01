@@ -114,6 +114,11 @@ Set `services.hermes-agent.nixManagesConfig = true` for upstream's managed
 mode instead: the CLI refuses config changes, and the services see only
 Hermes, bash, coreutils, git and `extraPackages`.
 
+For a gateway reachable from chat, prefer managed mode. Unmanaged, the agent
+runs as you and can edit `~/.hermes/config.yaml`, its allowlists included, and
+Nix only merges `settings` back in at the next switch. Managed, its config is
+what `settings` says.
+
 #### The Tier 1 gateway unit (Linux)
 
 ```nix

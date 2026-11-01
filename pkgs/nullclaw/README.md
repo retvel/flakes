@@ -76,7 +76,16 @@ exits: the same as upstream's `nullclaw service install` (`nullclaw gateway`,
 
 The gateway runs an autonomous agent that can execute commands as `user`,
 reachable from every configured channel. Review `autonomy` and each channel's
-`allow_from` in `config.json` before enabling it.
+`allow_from` before enabling it, and set them through `settings`: the agent
+can write to `stateDir`, `config.json` included, so it could widen what it
+may do or who may reach it, but `settings` is merged back in on every start.
+
+```nix
+services.nullclaw.settings = {
+  autonomy.level = "supervised";
+  channels.telegram.allow_from = [ "123456789" ];
+};
+```
 
 | Option | Default | Description |
 |---|---|---|

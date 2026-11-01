@@ -58,6 +58,7 @@ stdenvNoCC.mkDerivation {
     homepage = "https://docs.1mcp.app";
     license = lib.licenses.asl20;
     mainProgram = "1mcp";
+    sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     platforms = builtins.attrNames hashes;
   };
 }

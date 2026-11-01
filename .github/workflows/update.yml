@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       packages:
-        description: "Packages to update (space-separated, empty for all)"
+        description: "Packages to update (space-separated, empty for all; nixpkgs for the nixpkgs input)"
         required: false
         default: ""
 
@@ -21,6 +21,9 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  # To start check.yml on update/<name>: pushes made with this token start
+  # no workflows, but a dispatch does.
+  actions: write
 
 jobs:
   update:
@@ -32,7 +35,7 @@ jobs:
       # These run as root, filter the network, or are agents acting with the
       # user's access: their updates wait in a pull request (branch
       # update/<name>) for review instead of going straight to main.
-      REVIEW: "1mcp codex hermes-agent littlesnitch nullclaw opencode pi rayfish"
+      REVIEW: "1mcp codex hermes-agent littlesnitch nullclaw nullclaw-nightly opencode pi rayfish"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -52,13 +55,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Puts a checked update on update/<name>, on top of main, and opens
-          # (or retitles) its pull request. Pull requests opened with this
-          # token don't start check.yml; the update was checked here already.
+          # The path an update of <name> changes: pkgs/<name>, or flake.lock
+          # for the nixpkgs input.
+          paths() { if [ "$1" = nixpkgs ]; then echo flake.lock; else echo "pkgs/$1"; fi; }
+
+          # Puts a checked update on update/<name>, on top of main, opens (or
+          # retitles) its pull request, and starts check.yml there for the
+          # other systems: this token's pushes start no workflow themselves.
           propose() {
-            local name=$1 version=$2 branch="update/$1" commit
-            git add -A -- "pkgs/$name"
-            git commit -qm "Update $name to v$version"
+            local name=$1 title=$2 branch="update/$1" commit
+            git add -A -- "$(paths "$name")"
+            git commit -qm "$title"
             commit="$(git rev-parse HEAD)"
             git reset -q --hard HEAD~1
             git switch -q --detach origin/main
@@ -66,23 +73,47 @@ jobs:
             git push -qf origin "HEAD:refs/heads/$branch"
             git switch -q main
             if [ "$(gh pr view "$branch" --json state -q .state 2>/dev/null)" = OPEN ]; then
-              gh pr edit "$branch" --title "Update $name to v$version" >/dev/null
+              gh pr edit "$branch" --title "$title" >/dev/null
             else
-              gh pr create --head "$branch" --base main --title "Update $name to v$version" \
-                --body "Automated update of \`$name\`, built by the Update workflow. Read the upstream release before merging." \
+              gh pr create --head "$branch" --base main --title "$title" \
+                --body "Automated update of \`$name\`, built by the Update workflow on x86_64-linux; check.yml runs the other systems. Read the upstream release before merging." \
                 || { echo "::error::$name: could not open a pull request (Settings → Actions → allow GitHub Actions to create pull requests)"; failed=1; }
             fi
+            gh workflow run check.yml --ref "$branch" ||
+              { echo "::error::$name: could not start check.yml on $branch"; failed=1; }
           }
 
           # Whether update/<name> already holds exactly this update.
           proposed() {
             git fetch -q origin "update/$1" 2>/dev/null || return 1
-            git diff --quiet FETCH_HEAD -- "pkgs/$1" &&
-              [ -z "$(git ls-files --others --exclude-standard -- "pkgs/$1")" ]
+            git diff --quiet FETCH_HEAD -- "$(paths "$1")" &&
+              [ -z "$(git ls-files --others --exclude-standard -- "$(paths "$1")")" ]
           }
 
-          # Drops what a failed update left in pkgs/<name>.
-          discard() { git checkout -q -- "pkgs/$1"; git clean -fdq -- "pkgs/$1"; }
+          # Drops what a failed update left behind.
+          discard() { git checkout -q -- "$(paths "$1")"; git clean -fdq -- "$(paths "$1")"; }
+
+          # Checks the flake with <name>'s update, then commits it to main, or
+          # proposes it when it needs review. Sets failed=1 when it fails.
+          land() {
+            local name=$1 title=$2 review=$3
+            if $review && proposed "$name"; then
+              echo "$name: already proposed on update/$name"
+              discard "$name"; return 0
+            fi
+            # Build every x86_64-linux package, so packages built on this
+            # one (e.g. nullclaw-nightly on nullclaw) are checked too.
+            if ! nix flake check --all-systems -L; then
+              echo "::error::$name failed to build after update"
+              discard "$name"; failed=1; return 0
+            fi
+            if $review; then
+              propose "$name" "$title"
+            else
+              git add -A -- "$(paths "$name")"
+              git commit -qm "$title"
+            fi
+          }
 
           failed=0
           for script in pkgs/*/update.sh; do
@@ -98,23 +129,24 @@ jobs:
             version="$(jq -r .version "pkgs/$name/hashes.json" 2>/dev/null || echo new)"
             review=false
             [[ " $REVIEW " != *" $name "* ]] || review=true
-            if $review && proposed "$name"; then
-              echo "$name: v$version is already proposed on update/$name"
-              discard "$name"; continue
-            fi
-            # Build every x86_64-linux package, so packages built on this one
-            # (e.g. nullclaw-nightly on nullclaw) are checked too.
-            if ! nix flake check --all-systems -L; then
-              echo "::error::$name failed to build after update"
-              discard "$name"; failed=1; continue
-            fi
-            if $review; then
-              propose "$name" "$version"
-            else
-              git add -A -- "pkgs/$name"
-              git commit -qm "Update $name to v$version"
-            fi
+            land "$name" "Update $name to v$version" "$review"
           done
+
+          # nixpkgs, which every package's libraries and tools come from:
+          # weekly (Monday's first run) or when asked for, always through a
+          # pull request, since it touches every package.
+          if { [ -z "${PACKAGES:-}" ] && [ "$(date -u +%u%H)" = 103 ]; } ||
+            [[ " ${PACKAGES:-} " == *" nixpkgs "* ]]; then
+            if nix flake update nixpkgs; then
+              if [ -n "$(git status --porcelain -- flake.lock)" ]; then
+                rev="$(jq -r .nodes.nixpkgs.locked.rev flake.lock)"
+                land nixpkgs "Update nixpkgs to ${rev:0:12}" true
+              fi
+            else
+              echo "::error::nixpkgs: nix flake update failed"
+              discard nixpkgs; failed=1
+            fi
+          fi
 
           git pull -q --rebase origin main
           git push -q origin HEAD:main

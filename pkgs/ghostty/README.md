@@ -22,8 +22,16 @@ nixpkgs' `ghostty` or upstream's flake, `github:ghostty-org/ghostty`.
 ## Notes
 
 - **Auto-update.** The app sits in the read-only Nix store, but its built-in
-  updater still checks its channel. Set `auto-update = off` in the Ghostty
-  config.
+  updater still checks its channel. Turn it off in the Ghostty config, e.g.
+  with Home Manager:
+
+  ```nix
+  programs.ghostty = {
+    enable = true;
+    package = inputs.xr3t.packages.${system}.ghostty;
+    settings.auto-update = "off";
+  };
+  ```
 - **Install one.** Stable and tip share the bundle ID `com.mitchellh.ghostty`
   (as does nixpkgs' `ghostty-bin`), so with two installed, macOS may open
   either one (e.g. for `open -b`).

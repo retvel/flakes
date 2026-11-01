@@ -76,10 +76,10 @@ Systems: `aarch64-darwin`, `aarch64-linux`, `x86_64-linux`.
 ## Updates
 
 Packages follow upstream automatically: a workflow checks for new releases
-twice a day and commits them to `main`. Pick them up with
-`nix flake update xr3t`. Updates of root daemons, network filters and agents
-wait for review in a pull request first; see [SECURITY.md](SECURITY.md) for
-what is checked.
+twice a day and commits them to `main`, and the pinned nixpkgs is bumped
+weekly. Pick them up with `nix flake update xr3t`. Updates of root daemons,
+network filters and agents, and of nixpkgs, wait for review in a pull request
+first; see [SECURITY.md](SECURITY.md) for what is checked.
 
 ## License
 

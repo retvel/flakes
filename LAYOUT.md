@@ -14,6 +14,6 @@
 | `pkgs/<name>/nixos-module.nix`, `darwin-module.nix` | Same shape as `module.nix`, exported only to `nixosModules` or `darwinModules`. |
 | `pkgs/<name>/home-module.nix` | Same shape, exported as `homeManagerModules.<name>`. |
 | `pkgs/<name>/README.md` | Optional. The package's usage, options and maintenance notes. |
-| `.github/workflows/check.yml` | `nix flake check` on Linux x86_64/aarch64 and macOS, read-only token; on `main` (not pull requests) the x86_64 job pushes `hermes-agent` (only) to ret.cachix.org. |
-| `.github/workflows/update.yml` | Twice daily (03:17, 15:17 UTC), one run at a time: runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`, or for the packages in `REVIEW` opens a pull request from `update/<name>`; then pushes `hermes-agent` to ret.cachix.org. |
+| `.github/workflows/check.yml` | `nix flake check` on Linux x86_64/aarch64 and macOS, read-only token; only on `main` the x86_64 job pushes `hermes-agent` (only) to ret.cachix.org. |
+| `.github/workflows/update.yml` | Twice daily (03:17, 15:17 UTC), one run at a time: runs every `update.sh`, checks the flake, commits `Update <name> to vX.Y.Z` to `main`, or for the packages in `REVIEW` opens a pull request from `update/<name>` and starts `check.yml` on it; on Monday's first run (or when asked for) updates the `nixpkgs` input the same way, always as a pull request (`update/nixpkgs`); then pushes `hermes-agent` to ret.cachix.org. |
 | `.github/dependabot.yml` | Weekly bumps of the actions, which workflows pin by commit SHA. |

@@ -1,5 +1,6 @@
 {
   "version": "24.22.2",
+  "bundledNpm": "11.19.1",
   "hashes": {
     "aarch64-darwin": "sha256-H1rAdb5QvtR4DqO+GaAH/alepNUn0o120Lkd5H2RURU=",
     "aarch64-linux": "sha256-6xh4N6IjDUBHFhrAvgCFhOFrRvcm6clJDuNdxrF9m6g=",

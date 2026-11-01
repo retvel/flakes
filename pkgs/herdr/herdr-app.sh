@@ -5,7 +5,8 @@
 # with this package.
 
 export HERDR_RELEASES_URL="file://@releases@"
-# No usage reports; set HERDR_TELEMETRY yourself to change that.
+# No usage reports by default. With HERDR_TELEMETRY set (to 1, as the module
+# does with programs.herdr.telemetry), Herdr's own setting decides.
 export HERDR_TELEMETRY="${HERDR_TELEMETRY-0}"
 # The app downloads with curl and looks for herdr-core on PATH. Appended, so
 # the terminals it opens keep the user's own tools first.

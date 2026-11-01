@@ -6,6 +6,7 @@
   importNpmLock,
   makeWrapper,
   autoPatchelfHook,
+  gnugrep,
   libxcb,
   fd,
   ripgrep,
@@ -79,7 +80,16 @@ stdenvNoCC.mkDerivation {
     makeWrapper ${nodejs}/bin/node "$out/bin/pi" \
       --set PI_PACKAGE_DIR "$out/lib/pi/node_modules/@earendil-works/pi-coding-agent" \
       --set-default PI_SKIP_VERSION_CHECK 1 \
-      --set-default PI_TELEMETRY 0 \
+      --run ${lib.escapeShellArg ''
+        # No install telemetry by default, unless the user's settings.json
+        # (global or the project's) sets enableInstallTelemetry: PI_TELEMETRY
+        # would override it.
+        if [ -z "''${PI_TELEMETRY+set}" ] &&
+          ! ${gnugrep}/bin/grep -qs '"enableInstallTelemetry"' \
+            "''${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}/settings.json" .pi/settings.json; then
+          export PI_TELEMETRY=0
+        fi
+      ''} \
       --add-flags "$out/lib/pi/node_modules/@earendil-works/pi-coding-agent/dist/cli.js" \
       --suffix PATH : ${lib.makeBinPath [ nodejs ]} \
       --prefix PATH : ${

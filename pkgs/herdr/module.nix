@@ -13,6 +13,9 @@ let
   cfg = config.programs.herdr;
   isDarwin = options ? launchd;
   releases = "file://${cfg.package}/share/herdr/releases";
+  # "0" turns the app's usage report off; "1" only keeps herdr-app's own
+  # default (0) out of the way, so Herdr's setting decides.
+  telemetry = if cfg.telemetry then "1" else "0";
 in
 {
   options.programs.herdr = {
@@ -22,6 +25,15 @@ in
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.herdr;
       defaultText = lib.literalExpression "retvel.packages.\${pkgs.stdenv.hostPlatform.system}.herdr";
       description = "Herdr package to install.";
+    };
+    telemetry = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Let the app send its daily usage report upstream. false sets
+        HERDR_TELEMETRY=0, which turns it off whatever Herdr's settings say;
+        true leaves it to Herdr's own `telemetry` setting.
+      '';
     };
   };
 
@@ -35,14 +47,14 @@ in
       (lib.optionalAttrs isDarwin {
         launchd.user.envVariables = {
           HERDR_RELEASES_URL = releases;
-          HERDR_TELEMETRY = "0";
+          HERDR_TELEMETRY = telemetry;
         };
       })
 
       (lib.optionalAttrs (!isDarwin) {
         environment.sessionVariables = {
           HERDR_RELEASES_URL = releases;
-          HERDR_TELEMETRY = "0";
+          HERDR_TELEMETRY = telemetry;
         };
       })
     ]

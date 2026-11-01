@@ -31,6 +31,7 @@ Finder, the Dock or a desktop entry:
 |---|---|---|
 | `programs.herdr.enable` | `false` | Install the package and keep the app's updater off (below) |
 | `programs.herdr.package` | this flake's `herdr` | |
+| `programs.herdr.telemetry` | `false` | Allow the app's daily usage report; then Herdr's own `telemetry` setting decides |
 
 ## Updates come through Nix
 
@@ -49,9 +50,11 @@ this repo's `Update herdr to …` commits, picked up by `nix flake update`.
   signed bundle can't be changed), so the app's own updater is back; use the
   module there.
 
-The app also sends a daily usage report upstream; the module and
-`bin/herdr-app` set `HERDR_TELEMETRY=0`, so it doesn't (the same Finder/Dock
-caveat applies without the module).
+The app also sends a daily usage report upstream. By default it doesn't
+here: `bin/herdr-app` and the module set `HERDR_TELEMETRY=0`, which wins
+over Herdr's own `telemetry` setting (the same Finder/Dock caveat applies
+without the module). Set `programs.herdr.telemetry = true` to leave it to
+Herdr's setting instead (without the module, export `HERDR_TELEMETRY=1`).
 
 After enabling the module, quit and reopen Herdr so it starts with the
 variable (on NixOS, log in again first: session variables are read at login).

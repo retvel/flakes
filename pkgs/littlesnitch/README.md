@@ -43,9 +43,10 @@ nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "li
 The service is upstream's own `littlesnitch.service` from the tarball
 (`systemd.packages`), with `ExecStart` pointed into the store: its sandboxing,
 capability bounding set and ordering before `network-pre.target` follow
-upstream on every bump. The module only enables it and resets its
-`AssertCapability=` lines, which fail in containers whose systemd has fewer
-capabilities. The `littlesnitch` CLI is added to the system packages.
+upstream on every bump. The module only enables it. In a container whose
+systemd lacks a capability the unit asserts, the unit won't start; drop the
+assertions with `systemd.services.littlesnitch.unitConfig.AssertCapability = "";`.
+The `littlesnitch` CLI is added to the system packages.
 
 State lives in `/var/lib/littlesnitch`, which the daemon creates and manages:
 rules, the connection log, and `override/config/*.toml` (for example

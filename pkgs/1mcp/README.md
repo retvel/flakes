@@ -47,7 +47,7 @@ The attribute name starts with a digit, so quote it:
 | `externalUrl` | `null` | Public base URL for OAuth callbacks and advertised URLs. |
 | `enableAuth` | `true` | OAuth 2.1 on `/mcp` (`--enable-auth`). |
 | `environmentFile` | `<configDir>/.env` | Optional `KEY=value` file (API keys for MCP servers); skipped when missing. |
-| `hardening.enable` | `true` | systemd sandboxing for the runtime and its MCP servers: no privilege gain (no sudo), private `/tmp`, `/usr`, `/boot` and `/etc` read-only, kernel tunables and modules protected. The home directory stays writable. |
+| `hardening.enable` | `false` | systemd sandboxing for the runtime and its MCP servers: no privilege gain (no sudo), private `/tmp`, `/usr`, `/boot` and `/etc` read-only, kernel tunables and modules protected. The home directory stays writable. Off by default: upstream ships no service. |
 | `extraArgs` | `[ ]` | Extra `1mcp serve` flags, e.g. `--enable-config-reload`, `--trust-proxy loopback`. |
 
 ## Updates

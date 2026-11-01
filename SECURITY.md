@@ -65,22 +65,21 @@ fixes; there are no release branches.
 
 ## Service modules
 
-On NixOS the service modules run their daemons under systemd sandboxing.
-`lib/hardening.nix` is the part they share (no privilege gain through setuid;
-clock, kernel logs and cgroups protected), and each adds what its service can
-live without. On macOS (launchd) there is no sandbox.
+The service modules run each daemon the way upstream's own installer does,
+with the binary in the store, and add a sandbox only where upstream ships
+one. On macOS (launchd) there is none.
 
-- `nullclaw` and `1mcp`: `hardening.enable`, on by default, and `sudo`
-  doesn't work under it. nullclaw can write only to its `stateDir` (plus
-  `hardening.readWritePaths`); 1mcp gets a private `/tmp` and read-only
-  `/usr`, `/boot` and `/etc`. Turn it off only if the agent has to administer
-  the machine.
 - `littlesnitch`: upstream's own unit, with its capability bounding set and
   sandbox.
-- `rayfish`: runs as root for its TUN device, routes and resolver, with the
-  shared sandbox only.
 - `hermes-agent`: upstream's NixOS module, with its own system user and
   hardening.
+- `rayfish`: upstream's unit; root, for its TUN device, routes and resolver,
+  and no sandbox.
+- `nullclaw` and `1mcp`: no sandbox upstream. `hardening.enable` (off by
+  default) adds one: no privilege gain, so no `sudo`; nullclaw can write only
+  to its `stateDir` (plus `hardening.readWritePaths`), 1mcp gets a private
+  `/tmp` and read-only `/usr`, `/boot` and `/etc`. Turn it on unless the
+  agent has to administer the machine.
 
 Agents (`nullclaw`, `hermes-agent`, `codex`, `opencode`, `pi`) run commands a
 model chooses. Restrict who can reach them (e.g. nullclaw's `allow_from`) and

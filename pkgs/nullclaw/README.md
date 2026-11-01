@@ -97,7 +97,7 @@ services.nullclaw.settings = {
 | `services.nullclaw.environmentFile` | `<stateDir>/.env` | `KEY=value` file for the gateway (e.g. API keys); skipped if missing. `null` disables it. |
 | `services.nullclaw.watchdog.enable` | `false` | Restart the gateway when a polling channel gets stuck (see below). NixOS only. |
 | `services.nullclaw.watchdog.interval` | `"5min"` | How often the watchdog checks. |
-| `services.nullclaw.hardening.enable` | `true` | Filesystem read-only except `stateDir`, no privilege gain (see below). NixOS only. |
+| `services.nullclaw.hardening.enable` | `false` | Filesystem read-only except `stateDir`, no privilege gain (see below). NixOS only. |
 | `services.nullclaw.hardening.readWritePaths` | `[ ]` | Extra writable paths besides `stateDir`. |
 
 Run `nullclaw onboard` as `user` first, so `stateDir` exists. After editing
@@ -137,7 +137,7 @@ commands with no network, without `/nix/store`, or inside Alpine, which also
 defeats an agent meant to look at the host. `nullclaw status` still says
 "Sandbox: enabled".
 
-With `hardening.enable` (the default), systemd confines the gateway and every
+With `hardening.enable = true`, systemd confines the gateway and every
 command its agent runs instead: `ProtectSystem=strict` and `ProtectHome=read-only`
 make the whole filesystem read-only except `stateDir` (plus
 `hardening.readWritePaths`), `PrivateTmp`, `NoNewPrivileges` (setuid is
@@ -145,8 +145,9 @@ ignored, so `sudo` cannot work), and the kernel tunables, modules, logs,
 cgroups, clock and hostname are protected. Network, processes (`/proc`) and
 devices are left visible, so the agent can still monitor the machine; it just
 cannot change files outside `stateDir`. Give it more with
-`hardening.readWritePaths`, or turn it off with `hardening.enable = false` if
-the agent has to administer the machine (with `sudo`).
+`hardening.readWritePaths`. It is off by default, as upstream's service has
+no sandbox; leave it off if the agent has to administer the machine (with
+`sudo`).
 
 ## Updating
 

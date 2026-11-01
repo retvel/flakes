@@ -4,6 +4,7 @@
 # curl and jq.
 set -euo pipefail
 cd "$(dirname "$0")"
+# shellcheck source-path=SCRIPTDIR source=../../lib/update.sh
 . ../../lib/update.sh
 
 registry=https://registry.npmjs.org/@openai/codex

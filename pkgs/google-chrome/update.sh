@@ -7,6 +7,7 @@
 # dmg (~280 MB) on a bump to hash it. Needs curl, jq, uuidgen and nix.
 set -euo pipefail
 cd "$(dirname "$0")"
+# shellcheck source-path=SCRIPTDIR source=../../lib/update.sh
 . ../../lib/update.sh
 
 releases="https://versionhistory.googleapis.com/v1/chrome/platforms/mac/channels/stable/versions/all/releases"

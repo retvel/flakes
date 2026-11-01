@@ -70,7 +70,7 @@ read during evaluation (`hermes-agent`).
 
 A local check builds only the host's own system; CI builds Linux x86_64,
 Linux aarch64 and macOS. To try a change in a system config, build that
-config against this checkout (`--override-input retvel .`); don't switch to
+config against this checkout (`--override-input retvel path:<checkout>`); don't switch to
 it unless asked.
 
 ## Workflows

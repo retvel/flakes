@@ -3,13 +3,29 @@ self:
   config,
   lib,
   pkgs,
+  utils,
   ...
 }:
 
-with lib;
 let
+  inherit (lib)
+    literalExpression
+    mkEnableOption
+    mkIf
+    mkOption
+    optional
+    optionalAttrs
+    optionals
+    types
+    ;
   cfg = config.services."1mcp";
   home = config.users.users.${cfg.user}.home;
+  format = pkgs.formats.json { };
+  configFile =
+    if cfg.settings == null then
+      "${cfg.configDir}/mcp.json"
+    else
+      format.generate "1mcp-mcp.json" cfg.settings;
 in
 {
   options.services."1mcp" = {
@@ -33,9 +49,27 @@ in
       default = "${home}/.config/1mcp";
       defaultText = literalExpression ''"''${config.users.users.<user>.home}/.config/1mcp"'';
       description = ''
-        1MCP config directory. `mcp.json` in it lists the MCP servers; it is
-        created empty on first start and never overwritten, so it can be
-        edited in place (or symlinked to a repo).
+        1MCP config directory. Unless `settings` is set, `mcp.json` in it
+        lists the MCP servers; it is created empty on first start and never
+        overwritten, so it can be edited in place (or symlinked to a repo).
+      '';
+    };
+    settings = mkOption {
+      type = types.nullOr format.type;
+      default = null;
+      example = literalExpression ''
+        {
+          mcpServers.filesystem = {
+            command = "npx";
+            args = [ "-y" "@modelcontextprotocol/server-filesystem" "/home/alice/notes" ];
+          };
+        }
+      '';
+      description = ''
+        The MCP servers as Nix, written to the store as the `mcp.json` 1MCP
+        runs with, in place of the one in `configDir` (which commands like
+        `1mcp mcp add` then can't change). The store is world-readable: keep
+        API keys in `environmentFile`. `null` uses `configDir`'s `mcp.json`.
       '';
     };
     host = mkOption {
@@ -68,6 +102,16 @@ in
         MCP servers need. Skipped when missing.
       '';
     };
+    hardening.enable = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Confine the runtime and every MCP server it starts with systemd
+        sandboxing: no privilege gain (setuid, so no sudo), a private /tmp,
+        /usr, /boot and /etc read-only, kernel tunables and modules
+        protected. The user's home stays writable, so npx/uvx caches work.
+      '';
+    };
     extraArgs = mkOption {
       type = types.listOf types.str;
       default = [ ];
@@ -95,20 +139,22 @@ in
       environment.HOME = home;
       preStart = ''
         mkdir -p "${cfg.configDir}"
-        [ -e "${cfg.configDir}/mcp.json" ] || echo '{ "mcpServers": {} }' > "${cfg.configDir}/mcp.json"
+      ''
+      + lib.optionalString (cfg.settings == null) ''
+        [ -e "${configFile}" ] || echo '{ "mcpServers": {} }' > "${configFile}"
       '';
       serviceConfig = {
         User = cfg.user;
         Group = config.users.users.${cfg.user}.group;
         WorkingDirectory = home;
-        ExecStart = escapeShellArgs (
+        ExecStart = utils.escapeSystemdExecArgs (
           [
             "${cfg.package}/bin/1mcp"
             "serve"
             "--config-dir"
             cfg.configDir
             "--config"
-            "${cfg.configDir}/mcp.json"
+            configFile
             "--host"
             cfg.host
             "--port"
@@ -124,7 +170,16 @@ in
         EnvironmentFile = optional (cfg.environmentFile != null) "-${cfg.environmentFile}";
         Restart = "always";
         RestartSec = 3;
-      };
+      }
+      // optionalAttrs cfg.hardening.enable (
+        import ../../lib/hardening.nix
+        // {
+          PrivateTmp = true;
+          ProtectSystem = "full";
+          ProtectKernelTunables = true;
+          ProtectKernelModules = true;
+        }
+      );
     };
   };
 }

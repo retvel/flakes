@@ -59,7 +59,10 @@ detects nix-darwin from the `launchd` option.
   `/var/log/rayfish.log`. It waits for the Nix store to be mounted at boot and
   restarts after a failed exit.
 - **NixOS:** systemd unit `rayfish.service`, started after
-  `network-online.target` and restarted on failure.
+  `network-online.target` and restarted on failure. It runs as root (TUN
+  device, routes, resolver) with the flake's shared sandbox
+  (`lib/hardening.nix`: no privilege gain through setuid; clock, kernel logs
+  and cgroups protected).
 
 Both run the binary straight from the Nix store.
 

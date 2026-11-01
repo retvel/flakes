@@ -40,12 +40,14 @@ The attribute name starts with a digit, so quote it:
 | `enable` | `false` | Run `1mcp serve` as a systemd service. |
 | `package` | this flake's package | 1MCP package to run. |
 | `user` | (required) | User the runtime and its MCP servers run as, with that user's PATH (so `npx`/`uvx` servers work). |
-| `configDir` | `~<user>/.config/1mcp` | Config directory. `mcp.json` is created empty on first start and never overwritten, so edit it in place. |
+| `configDir` | `~<user>/.config/1mcp` | Config directory. Unless `settings` is set, `mcp.json` is created empty on first start and never overwritten, so edit it in place. |
+| `settings` | `null` | The MCP servers as Nix (`{ mcpServers = { ... }; }`), written to the store and used in place of `configDir`'s `mcp.json`. The store is world-readable: keep API keys in `environmentFile`. |
 | `host` | `127.0.0.1` | Listen address. Keep it on loopback and put a TLS proxy in front. |
 | `port` | `3050` | HTTP port. |
 | `externalUrl` | `null` | Public base URL for OAuth callbacks and advertised URLs. |
 | `enableAuth` | `true` | OAuth 2.1 on `/mcp` (`--enable-auth`). |
 | `environmentFile` | `<configDir>/.env` | Optional `KEY=value` file (API keys for MCP servers); skipped when missing. |
+| `hardening.enable` | `true` | systemd sandboxing for the runtime and its MCP servers: no privilege gain (no sudo), private `/tmp`, `/usr`, `/boot` and `/etc` read-only, kernel tunables and modules protected. The home directory stays writable. |
 | `extraArgs` | `[ ]` | Extra `1mcp serve` flags, e.g. `--enable-config-reload`, `--trust-proxy loopback`. |
 
 ## Updates

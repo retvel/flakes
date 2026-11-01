@@ -9,8 +9,18 @@ self:
 
 # One module for both nix-darwin (launchd) and NixOS (systemd). The platform is
 # detected from the declared options rather than `pkgs`, which would recurse.
-with lib;
 let
+  inherit (lib)
+    literalExpression
+    mkDefault
+    mkEnableOption
+    mkIf
+    mkMerge
+    mkOption
+    optional
+    optionalAttrs
+    types
+    ;
   cfg = config.services.rayfish;
   isDarwin = options ? launchd;
 
@@ -152,7 +162,11 @@ in
         wantedBy = [ "multi-user.target" ];
         wants = [ "network-online.target" ];
         after = [ "network-online.target" ];
-        serviceConfig = {
+        # Root, for its TUN device, routes and resolver, so only the shared
+        # sandbox: it can't gain more through setuid, and the clock, kernel
+        # logs and cgroups are protected. Narrowing its capabilities and
+        # filesystem needs testing against a live mesh first.
+        serviceConfig = import ../../lib/hardening.nix // {
           ExecStart = "${cfg.package}/libexec/rayfish/ray daemon";
           Restart = "on-failure";
           RestartSec = 5;

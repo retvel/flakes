@@ -40,11 +40,10 @@ fixes; there are no release branches.
 - **Rolling builds.** `ghostty-tip` and `nullclaw-nightly` follow upstream
   builds that are replaced in place. Their pins only download until the next
   build.
-- **Updates.** `.github/workflows/update.yml` checks for new releases twice a
-  day and only commits an update that passes `nix flake check`. Packages that
-  run as root, filter the network or act as agents with your access (`REVIEW`
-  in that workflow) don't go straight to `main`: their updates wait in a pull
-  request for review. The rest are committed directly.
+- **Updates.** New releases are committed to `main` automatically once
+  `nix flake check` passes, without review, except for the packages in
+  `REVIEW` (root daemons, network filters, agents), whose updates wait in a
+  pull request. See [README](README.md#updates) for how the workflow runs.
 - **Binary cache.** CI pushes only `hermes-agent`'s closure, built from `main`,
   to `retvel.cachix.org`; builds from pull requests never reach it. Trusting
   that cache means trusting this repository's CI.

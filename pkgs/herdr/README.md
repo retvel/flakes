@@ -76,3 +76,12 @@ three.
 On a bump, check `core_min` in `app/latest.json`: the oldest herdr-core the app
 works with. Don't run `hc update` on this herdr-core: it installs into
 `~/.local/bin`, outside the Nix store.
+
+Also check that the app still reads `HERDR_RELEASES_URL`
+(`strings libexec/herdr-app | grep HERDR_RELEASES_URL`, or `Herdr.app` on
+macOS). Upstream has no documented switch for the app's updater ("an
+installed app downloads them by itself"); this variable is the app's
+release-server override, not a promise to redistributions. If it goes, the
+app updates itself again. Telemetry does have one: `"telemetry": false` in
+`~/.config/herdr-app/settings.json`, which `programs.herdr.telemetry = true`
+leaves in charge.

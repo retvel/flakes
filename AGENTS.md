@@ -26,13 +26,36 @@ See `LAYOUT.md`; keep it in sync when adding a kind of file or workflow.
 
 Run a package and its service as upstream's own installer does (its unit or
 plist, recheck it on a bump), with the binary in the store: Nix makes it
-declarative, it doesn't change how it behaves. Two things go through Nix
-instead: updates (self-update and update checks off) and telemetry (off by
-default, through upstream's own switch). Both are defaults: what the user
-sets in Nix or in the program's own config still wins, wherever the
-program allows it (a self-update can't replace the store copy anyway).
-Anything else beyond upstream, such as a sandbox it doesn't ship, is an
-option that is off by default.
+declarative, it doesn't change how it behaves. Updates and telemetry go
+through Nix instead (next section). Anything else beyond upstream, such as a
+sandbox it doesn't ship, is an option that is off by default.
+
+## Updates and telemetry
+
+Turn off every package's self-update, update check and telemetry, wherever
+it can be done; updates come from this flake. When adding or bumping a
+package, look for all three (strings in the binary, its docs, its config
+schema).
+
+1. Use upstream's documented switch first: a setting, an env var, a flag, or
+   an override upstream offers redistributions (Little Snitch's
+   `software_update.toml`).
+2. Without one, an undocumented knob will do (Herdr's `HERDR_RELEASES_URL`),
+   but say so in the package README and recheck it on every bump: upstream
+   may drop it.
+3. Last resort for an update command: a guard wrapper that refuses it
+   (`ray update`, `opencode upgrade`).
+
+Telemetry and update checks are defaults the user can set back: the user's
+Nix config or the program's own config wins. Add a flag only while the
+program's config doesn't set that key (codex), set an env var only while
+neither it nor the matching setting is set (pi), or give the module an
+option (herdr, littlesnitch). A self-update stays off: it would replace the
+store copy, and a root daemon on macOS could write into /nix/store.
+
+In the package README, say what is off, how, and how to turn it back on.
+Where nothing can turn it off (an updater inside a signed app bundle:
+Ghostty, Chrome), say that and how to turn it off in the app.
 
 ## Checking changes
 

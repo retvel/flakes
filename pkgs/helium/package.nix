@@ -11,23 +11,16 @@ let
   sources = lib.importJSON ./hashes.json;
   inherit (sources) version hashes;
   inherit (stdenvNoCC.hostPlatform) system;
-
-  arch =
-    {
-      aarch64-darwin = "arm64";
-      x86_64-darwin = "x86_64";
-    }
-    .${system} or (throw "helium: unsupported system ${system}");
 in
 stdenvNoCC.mkDerivation {
   pname = "helium";
   inherit version;
 
-  # Upstream's signed, notarized Helium.app, one dmg per architecture; nothing
-  # is compiled.
+  # Upstream's signed, notarized Helium.app for Apple Silicon; nothing is
+  # compiled.
   src = fetchurl {
-    url = "https://github.com/imputnet/helium-macos/releases/download/${version}/helium_${version}_${arch}-macos.dmg";
-    hash = hashes.${system};
+    url = "https://github.com/imputnet/helium-macos/releases/download/${version}/helium_${version}_arm64-macos.dmg";
+    hash = hashes.${system} or (throw "helium: unsupported system ${system}");
   };
 
   nativeBuildInputs = [ undmg ];
@@ -65,10 +58,7 @@ stdenvNoCC.mkDerivation {
     license = lib.licenses.gpl3Only;
     mainProgram = "helium";
     # macOS 13 or later.
-    platforms = [
-      "aarch64-darwin"
-      "x86_64-darwin"
-    ];
+    platforms = [ "aarch64-darwin" ];
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
   };
 }

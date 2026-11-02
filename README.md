@@ -29,7 +29,7 @@ Nix packages by `Prompter`.
 | [ghostty-tip](pkgs/ghostty) | Ghostty's rolling tip build from main, bumped daily |
 | [google-chrome](pkgs/google-chrome) | Google Chrome's latest Stable release from Google's signed dmg (unfree); macOS only, no compilation |
 | [herdr](pkgs/herdr) | Herdr desktop app, herdr-core (`hc`) and the `herdr` CLI from upstream's prebuilt releases, with a nix-darwin/NixOS module that routes its updates through Nix; Apple Silicon macOS and Linux, no compilation |
-| [helium](pkgs/helium) | Helium browser (Chromium-based, private by default) from upstream's signed, notarized dmg; macOS only, no compilation |
+| [helium](pkgs/helium) | Helium browser (Chromium-based, private by default) from upstream's signed, notarized dmg, with a Home Manager module that keeps its update check off; Apple Silicon macOS only, no compilation |
 | [hermes-agent](pkgs/hermes-agent) | Hermes Agent pinned to upstream's latest stable release tag (`minimal` + telegram, mcp), with upstream's NixOS and Home Manager modules; x86_64 Linux only |
 | [littlesnitch](pkgs/littlesnitch) | Little Snitch for Linux network monitor (unfree freeware binary), with a NixOS service module |
 | [lite-xl](pkgs/lite-xl) | Lite XL editor from upstream's addons release (language plugins, colour schemes) as Lite XL.app, Apple Silicon only |

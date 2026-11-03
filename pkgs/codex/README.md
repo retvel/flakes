@@ -48,12 +48,26 @@ instead of something the wrapper writes at run time.
 integrity hash the registry publishes, so nothing is downloaded.
 
 Codex doesn't update itself here (no `CODEX_MANAGED_BY_*` package manager is
-set), and the wrapper passes `-c check_for_update_on_startup=false`, so it
-doesn't look for or announce newer releases either: updates come through this
-flake. It also passes `-c analytics.enabled=false`: no usage analytics.
-Each flag is only added while `config.toml` doesn't set that key, so your
-config (or Home Manager's `programs.codex.settings`) decides once it does,
-e.g. `settings.analytics.enabled = true`.
+set). The Home Manager module defaults `check_for_update_on_startup` and
+`analytics.enabled` to `false` in `programs.codex.settings`, disabling startup
+update checks and usage analytics. Set either to `true` to enable it again.
+These are configuration defaults: the wrapper adds no `-c` overrides, which
+would force embedded mode instead of using the shared background server.
+
+Without the Home Manager module, the prebuilt binary keeps upstream's defaults
+for update checks and analytics. Disable them in `$CODEX_HOME/config.toml`
+(`~/.codex/config.toml` by default):
+
+```toml
+check_for_update_on_startup = false
+
+[analytics]
+enabled = false
+```
+
+Merge these settings into an existing file, placing the top-level update
+setting before any table headers and using an existing `[analytics]` table
+if present. Set either value to `true` to enable it again.
 
 `codex app-server daemon` would copy the running package into
 `$CODEX_HOME/packages/app-server-daemon/releases` and keep that copy updated

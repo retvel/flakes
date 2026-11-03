@@ -28,6 +28,12 @@ in
     # downloads one. Only for packages that say where (this flake's).
     (lib.mkIf (cfg.enable && cfg.package != null && cfg.package ? appServerDaemon) {
       home.file."${codexHome}/packages/app-server-daemon/current".source = cfg.package.appServerDaemon;
+      # CLI config overrides force embedded mode instead of the shared server.
+      # Keep these defaults in config.toml, where user settings can override them.
+      programs.codex.settings = {
+        check_for_update_on_startup = lib.mkDefault false;
+        analytics.enabled = lib.mkDefault false;
+      };
     })
   ];
 }

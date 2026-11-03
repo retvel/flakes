@@ -6,7 +6,6 @@
   makeWrapper,
   patchelf,
   coreutils,
-  gnugrep,
 }:
 
 let
@@ -79,18 +78,6 @@ stdenv.mkDerivation (finalAttrs: {
           { [ -L "$link" ] || [ ! -e "$link" ]; }; then
           ${coreutils}/bin/mkdir -p "''${link%/*}" &&
             ${coreutils}/bin/ln -sfn "${placeholder "out"}/libexec/codex" "$link" || true
-        fi
-        # Nix's defaults: no startup check for a newer release (updates come
-        # through this flake) and no usage analytics. Passed as `-c`, which
-        # goes before any subcommand, only while config.toml doesn't set the
-        # key itself, so the user's config (Home Manager's programs.codex
-        # included) still decides.
-        config="''${CODEX_HOME:-$HOME/.codex}/config.toml"
-        if ! ${gnugrep}/bin/grep -Eqs '^[[:space:]]*check_for_update_on_startup[[:space:]]*=' "$config"; then
-          set -- -c check_for_update_on_startup=false "$@"
-        fi
-        if ! ${gnugrep}/bin/grep -Eqs '^[[:space:]]*(\[analytics\]|analytics[[:space:]]*[.=])' "$config"; then
-          set -- -c analytics.enabled=false "$@"
         fi
       ''}
   ''

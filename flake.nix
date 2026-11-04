@@ -45,16 +45,12 @@
         in
         lib.genAttrs packageNames (name: scope.${name});
 
-      # Packages whose evaluation fetches another flake (Hermes; cua-driver
-      # reads Hermes' lock). Their platforms are given here, matching their
-      # meta.platforms, so listing packages.<system> or using any module never
-      # fetches Hermes on other systems.
+      # Packages whose evaluation fetches another flake (Hermes). Their
+      # platforms are given here, matching their meta.platforms, so listing
+      # packages.<system> or using any module never fetches Hermes on other
+      # systems.
       fixedPlatforms = {
         hermes-agent = [ "x86_64-linux" ];
-        cua-driver = [
-          "aarch64-linux"
-          "x86_64-linux"
-        ];
       };
 
       # Only expose packages that build on the given system.

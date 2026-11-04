@@ -90,7 +90,10 @@ let
   );
 in
 {
-  imports = [ upstream.homeManagerModules.default ];
+  imports = [
+    upstream.homeManagerModules.default
+    (import ./cua-driver.nix self)
+  ];
 
   options.services.hermes-agent.nixManagesConfig = lib.mkOption {
     type = lib.types.bool;

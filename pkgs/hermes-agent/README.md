@@ -171,6 +171,13 @@ with what it would generate and rewrites it when they differ.
 }
 ```
 
+### Computer use with this flake's cua-driver (Linux)
+
+`services.hermes-agent.cuaDriver.enable = true` (both modules) points Hermes'
+`computer_use` tool at the [cua-driver](../cua-driver) package through
+`HERMES_CUA_DRIVER_CMD`, instead of the driver `hermes computer-use install`
+downloads into `~/.hermes`. Off by default.
+
 ### Keep the cache hit
 
 Do not set `services.hermes-agent.extraDependencyGroups` or

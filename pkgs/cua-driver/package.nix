@@ -4,39 +4,33 @@
   stdenvNoCC,
   fetchurl,
   autoPatchelfHook,
+  runtimeShell,
   libx11,
   libxi,
   libxkbcommon,
 }:
 
 let
-  # Not tracked on its own: the version, URL and hash come from Hermes'
-  # pm/lock.json at the commit pkgs/hermes-agent pins, so this is always the
-  # cua-driver that Tier 1 (`hermes pm install cua-driver`) installs for that
-  # Hermes release, and it moves with each hermes-agent bump.
-  pin = lib.importJSON ../hermes-agent/hashes.json;
-  hermesSrc = builtins.fetchTree {
-    type = "github";
-    owner = "NousResearch";
-    repo = "hermes-agent";
-    inherit (pin) rev narHash;
-  };
-  locked = (lib.importJSON "${hermesSrc}/pm/lock.json").packages.cua-driver;
+  # Version and per-system hashes live in hashes.json so update.sh can rewrite
+  # them; it follows trycua/cua's cua-driver-rs-v<version> releases.
+  versionData = lib.importJSON ./hashes.json;
+  inherit (versionData) version hashes;
 
-  targets = {
-    "aarch64-linux" = "linux-arm64";
-    "x86_64-linux" = "linux-x64";
+  arch = {
+    "aarch64-linux" = "arm64";
+    "x86_64-linux" = "x86_64";
   };
   system = stdenvNoCC.hostPlatform.system;
-  artifact =
-    locked.artifacts.${targets.${system} or (throw "cua-driver: no Linux build for ${system}")};
 in
 stdenvNoCC.mkDerivation {
   pname = "cua-driver";
-  inherit (locked) version;
+  inherit version;
 
   src = fetchurl {
-    inherit (artifact) url sha256;
+    url = "https://github.com/trycua/cua/releases/download/cua-driver-rs-v${version}/cua-driver-rs-${version}-linux-${
+      arch.${system} or (throw "cua-driver: no Linux build for ${system}")
+    }-binary.tar.gz";
+    hash = hashes.${system};
   };
 
   sourceRoot = ".";
@@ -51,19 +45,25 @@ stdenvNoCC.mkDerivation {
 
   # The release keeps its tools side by side; cua-driver finds
   # cua-cursor-theme and the wayland-helper next to itself. The Node addon is
-  # for the npm package only.
+  # for the npm package only. bin/cua-driver is a wrapper (see README.md):
+  # telemetry and the update check default to off, `update --apply` (the
+  # upstream installer) is refused.
   installPhase = ''
     runHook preInstall
     rm -f cua_driver_node_runtime.node
     mkdir -p $out/libexec/cua-driver $out/bin
     cp -r . $out/libexec/cua-driver
-    ln -s $out/libexec/cua-driver/cua-driver $out/bin/cua-driver
+    substitute ${./wrapper.sh} $out/bin/cua-driver \
+      --subst-var-by shell ${runtimeShell} \
+      --subst-var-by driver $out/libexec/cua-driver/cua-driver
+    chmod +x $out/bin/cua-driver
     ln -s $out/libexec/cua-driver/cua-cursor-theme $out/bin/cua-cursor-theme
     runHook postInstall
   '';
 
-  # Every library it links resolves (autoPatchelf): ld.so lists them
-  # without running the program, which needs a desktop.
+  # Every library it links resolves (autoPatchelf; ld.so lists them without
+  # running cua-cursor-theme, which needs a desktop), and the wrapper starts
+  # the pinned version.
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
@@ -72,15 +72,16 @@ stdenvNoCC.mkDerivation {
         exit 1
       fi
     done
+    HOME="$TMPDIR" "$out/bin/cua-driver" --version | grep -qx "cua-driver ${version}"
     runHook postInstallCheck
   '';
 
   meta = {
-    description = "Background desktop control driver for Hermes' computer_use tool, the build Hermes' pm lock pins";
+    description = "Background desktop control driver, used by Hermes' computer_use tool";
     homepage = "https://github.com/trycua/cua";
     license = lib.licenses.mit;
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     mainProgram = "cua-driver";
-    platforms = builtins.attrNames targets;
+    platforms = builtins.attrNames hashes;
   };
 }

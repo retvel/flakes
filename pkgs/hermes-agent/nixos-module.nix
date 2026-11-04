@@ -7,7 +7,10 @@ let
 in
 { lib, pkgs, ... }:
 {
-  imports = [ upstream.nixosModules.default ];
+  imports = [
+    upstream.nixosModules.default
+    (import ./cua-driver.nix self)
+  ];
   services.hermes-agent.package =
     lib.mkDefault
       self.packages.${pkgs.stdenv.hostPlatform.system}.hermes-agent;

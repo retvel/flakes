@@ -21,12 +21,28 @@ jobs:
       HAS_CACHIX: ${{ secrets.CACHIX_AUTH_TOKEN != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The base branch too, for macOS to compare against.
+          fetch-depth: 0
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+      # On macOS outside main, only the checks whose derivation differs from
+      # the base branch's are built: main's own run already built the rest.
+      # Finding them evaluates every macOS check. Most updates change none
+      # (a Linux-only package), which skips the store below as well.
+      - name: Find what differs from the base branch
+        id: changed
+        if: runner.os == 'macOS' && github.ref != 'refs/heads/main'
+        env:
+          BASE: origin/${{ github.base_ref || 'main' }}
+        run: |
+          changed="$(lib/changed-checks.sh "$(nix eval --raw --impure --expr builtins.currentSystem)" "$BASE")"
+          echo "To build: ${changed:-nothing}"
+          echo "checks=$(echo $changed)" >>"$GITHUB_OUTPUT"
       # macOS packages are mostly app downloads that no binary cache holds:
       # keep the Nix store between runs instead of fetching them each time.
       # The key changes with any package; a run restores the newest store
       # saved before it, and the store is trimmed to 4G before saving.
-      - if: runner.os == 'macOS'
+      - if: runner.os == 'macOS' && (steps.changed.conclusion == 'skipped' || steps.changed.outputs.checks != '')
         uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
           primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.lock', '**/*.nix', 'pkgs/**/hashes.json') }}
@@ -37,12 +53,20 @@ jobs:
         with:
           name: ret
           skipPush: true
-      # Evaluates every system and builds this runner's packages. Not
-      # --no-build: its read-only store breaks filtered sources read during
-      # evaluation (hermes-agent's uv.lock). --keep-going reports every
-      # failing package, not just the first.
-      - name: Evaluate all systems, build this runner's packages
-        run: nix flake check --all-systems --keep-going -L
+      # Each runner evaluates and builds its own system only: Linux checks
+      # Linux, macOS checks macOS. Not --no-build: its read-only store breaks
+      # filtered sources read during evaluation (hermes-agent's uv.lock).
+      # --keep-going reports every failing package, not just the first.
+      - name: Evaluate and build this runner's system
+        if: steps.changed.conclusion == 'skipped'
+        run: nix flake check --keep-going -L
+      - name: Build the checks that differ from the base branch
+        if: steps.changed.outputs.checks != ''
+        env:
+          CHECKS: ${{ steps.changed.outputs.checks }}
+        run: |
+          system="$(nix eval --raw --impure --expr builtins.currentSystem)"
+          nix build --no-link --keep-going -L $(printf ".#checks.$system.\"%s\" " $CHECKS)
       # Only hermes-agent's runtime closure, and only from main: builds of
       # pull requests and update/<name> branches never reach the cache.
       # Paths already on cache.nixos.org are skipped.

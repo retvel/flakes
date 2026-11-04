@@ -26,8 +26,8 @@ jobs:
           fetch-depth: 0
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
       # On macOS outside main, only the checks whose derivation differs from
-      # the base branch's are built: main's own run already built the rest,
-      # and the Linux jobs evaluate every system. Most updates change none
+      # the base branch's are built: main's own run already built the rest.
+      # Finding them evaluates every macOS check. Most updates change none
       # (a Linux-only package), which skips the store below as well.
       - name: Find what differs from the base branch
         id: changed
@@ -53,13 +53,13 @@ jobs:
         with:
           name: ret
           skipPush: true
-      # Evaluates every system and builds this runner's packages. Not
-      # --no-build: its read-only store breaks filtered sources read during
-      # evaluation (hermes-agent's uv.lock). --keep-going reports every
-      # failing package, not just the first.
-      - name: Evaluate all systems, build this runner's packages
+      # Each runner evaluates and builds its own system only: Linux checks
+      # Linux, macOS checks macOS. Not --no-build: its read-only store breaks
+      # filtered sources read during evaluation (hermes-agent's uv.lock).
+      # --keep-going reports every failing package, not just the first.
+      - name: Evaluate and build this runner's system
         if: steps.changed.conclusion == 'skipped'
-        run: nix flake check --all-systems --keep-going -L
+        run: nix flake check --keep-going -L
       - name: Build the checks that differ from the base branch
         if: steps.changed.outputs.checks != ''
         env:

@@ -42,9 +42,10 @@ fixes; there are no release branches.
   replaced in place. Its pin only downloads until the next build.
 - **Updates.** New releases are committed to `main` automatically once
   `nix flake check` passes, without review, except for the packages in
-  `REVIEW` (root daemons, network filters, agents), whose updates wait in a
-  pull request. The pinned nixpkgs, which every package's libraries and tools
-  come from, is bumped weekly, also through a pull request. See
+  `REVIEW` (root daemons, network filters, agents), whose updates go through
+  a pull request that CI merges, also without review, once it builds on Linux
+  x86_64, Linux aarch64 and macOS. The pinned nixpkgs, which every package's
+  libraries and tools come from, is bumped weekly the same way. See
   [LAYOUT.md](LAYOUT.md) for how the workflow runs.
 - **Dependencies follow upstream's lock.** A package assembled from
   upstream's own lockfile installs exactly what that lock names, advisories
@@ -65,7 +66,8 @@ fixes; there are no release branches.
 ## CI hardening
 
 - Workflows default to a read-only `GITHUB_TOKEN`; only the update workflow
-  can write, and only to commit updates and open their pull requests.
+  can write, to commit updates and open their pull requests, and the check
+  workflow's `merge` job, to merge an `update/<name>` pull request it built.
 - Secrets reach only the step that uses them (the Cachix push), never a
   whole job.
 - Actions are pinned by commit SHA and bumped by Dependabot.

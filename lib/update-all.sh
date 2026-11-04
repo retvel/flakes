@@ -56,10 +56,6 @@ propose() {
       --body "Automated update of \`$name\`, built by the Update workflow on $UPDATE_SYSTEM; check.yml runs the other systems and merges this pull request once all of them pass." ||
       { echo "::error::$name: could not open a pull request (Settings → Actions → allow GitHub Actions to create pull requests)"; failed=1; }
   fi
-  # Asks the Codex GitHub app, where it is installed, to review this push. It
-  # may ignore comments from bots; the merge never waits for it.
-  gh pr comment "$branch" --body "@codex review" >/dev/null ||
-    echo "::warning::$name: could not ask Codex for a review"
   gh workflow run check.yml --ref "$branch" ||
     { echo "::error::$name: could not start check.yml on $branch"; failed=1; }
 }

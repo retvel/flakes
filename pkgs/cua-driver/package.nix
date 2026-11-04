@@ -5,6 +5,7 @@
   fetchurl,
   autoPatchelfHook,
   runtimeShell,
+  gnugrep,
   libx11,
   libxi,
   libxkbcommon,
@@ -55,6 +56,7 @@ stdenvNoCC.mkDerivation {
     cp -r . $out/libexec/cua-driver
     substitute ${./wrapper.sh} $out/bin/cua-driver \
       --subst-var-by shell ${runtimeShell} \
+      --subst-var-by grep ${lib.getExe gnugrep} \
       --subst-var-by driver $out/libexec/cua-driver/cua-driver
     chmod +x $out/bin/cua-driver
     ln -s $out/libexec/cua-driver/cua-cursor-theme $out/bin/cua-cursor-theme

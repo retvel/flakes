@@ -28,8 +28,9 @@ permissions:
 env:
   GH_TOKEN: ${{ github.token }}
   # These run as root, filter the network, or are agents acting with the
-  # user's access: their updates wait in a pull request (branch
-  # update/<name>) for review instead of going straight to main.
+  # user's access: their updates go through a pull request (branch
+  # update/<name>), which check.yml merges once every system builds it,
+  # instead of straight to main from this Linux-only run.
   REVIEW: "1mcp codex hermes-agent littlesnitch muxin nullclaw opencode pi rayfish"
 
 jobs:

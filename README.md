@@ -80,8 +80,8 @@ Systems: `aarch64-darwin`, `aarch64-linux`, `x86_64-linux`.
 Packages follow upstream automatically: a workflow checks for new releases
 twice a day and commits them to `main`, and the pinned nixpkgs is bumped
 weekly. Pick them up with `nix flake update xr3t`. Updates of root daemons,
-network filters and agents, and of nixpkgs, wait for review in a pull request
-first; see [SECURITY.md](SECURITY.md) for what is checked.
+network filters and agents, and of nixpkgs, go through a pull request that is
+merged once it builds on every system; see [SECURITY.md](SECURITY.md) for what is checked.
 
 ## License
 

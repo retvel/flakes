@@ -36,8 +36,9 @@ ours() {
 paths() { if [ "$1" = nixpkgs ]; then echo flake.lock; else echo "pkgs/$1"; fi; }
 
 # Puts a checked update on update/<name>, on top of main, opens (or retitles)
-# its pull request, and starts check.yml there for the other systems: this
-# token's pushes start no workflow themselves.
+# its pull request, and starts check.yml there for the other systems, which
+# merges it once they all pass: this token's pushes start no workflow
+# themselves.
 propose() {
   local name=$1 title=$2 branch="update/$1" commit
   git add -A -- "$(paths "$name")"
@@ -52,7 +53,7 @@ propose() {
     gh pr edit "$branch" --title "$title" >/dev/null
   else
     gh pr create --head "$branch" --base main --title "$title" \
-      --body "Automated update of \`$name\`, built by the Update workflow on $UPDATE_SYSTEM; check.yml runs the other systems. Read the upstream release before merging." ||
+      --body "Automated update of \`$name\`, built by the Update workflow on $UPDATE_SYSTEM; check.yml runs the other systems and merges this pull request once all of them pass." ||
       { echo "::error::$name: could not open a pull request (Settings → Actions → allow GitHub Actions to create pull requests)"; failed=1; }
   fi
   gh workflow run check.yml --ref "$branch" ||

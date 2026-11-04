@@ -51,3 +51,30 @@ jobs:
         env:
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
         run: nix build .#hermes-agent --no-link --print-out-paths | cachix push ret
+
+  # An update/<name> branch that update.yml proposed and every system above
+  # built: merge its pull request, unless the branch moved on since this run
+  # started. Only a dispatch from update.yml (or someone with write access)
+  # runs this, never a pull_request event. This token's merge starts no
+  # workflow, so check.yml is started on main for its Cachix push.
+  merge:
+    needs: check
+    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/update/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BRANCH: ${{ github.ref_name }}
+      SHA: ${{ github.sha }}
+    steps:
+      - name: Merge the update's pull request
+        run: |
+          if [ "$(gh pr view "$BRANCH" --json state -q .state)" != OPEN ]; then
+            echo "$BRANCH: no open pull request"; exit 0
+          fi
+          gh pr merge "$BRANCH" --merge --delete-branch --match-head-commit "$SHA"
+          gh workflow run check.yml --ref main

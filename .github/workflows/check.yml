@@ -65,16 +65,20 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
-    env:
-      GH_TOKEN: ${{ github.token }}
-      GH_REPO: ${{ github.repository }}
-      BRANCH: ${{ github.ref_name }}
-      SHA: ${{ github.sha }}
     steps:
+      # The token goes only to this step, as the secrets above do.
       - name: Merge the update's pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        # The branch is deleted through the API: gh pr merge --delete-branch
+        # also looks for a local checkout, which this job has none of.
         run: |
           if [ "$(gh pr view "$BRANCH" --json state -q .state)" != OPEN ]; then
             echo "$BRANCH: no open pull request"; exit 0
           fi
-          gh pr merge "$BRANCH" --merge --delete-branch --match-head-commit "$SHA"
+          gh pr merge "$BRANCH" --merge --match-head-commit "$SHA"
+          gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$BRANCH" >/dev/null
           gh workflow run check.yml --ref main

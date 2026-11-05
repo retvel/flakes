@@ -6,7 +6,7 @@
     "x86_64-linux": "sha256-SMwOIeBIeQ5UwM9XScJyUAUxPWUmUcQLeiH+uWl6r3U="
   },
   "npm": {
-    "version": "12.2.1",
-    "hash": "sha512-bKCmFRVT/BB+YPEYbZwQ1XUI3N5t4xKSpU1MxOjo7z3iWzKBJ0ZXRC1xFdEN+TC7N5TdywaBzf2dMXGJq/e2PQ=="
+    "version": "12.2.2",
+    "hash": "sha512-KglgbZyacf7jH+FHuNRqVuCzQi8VhI2a7J87Ix43FsPTuZoGWmIXXGdZtBUOA79vwL+IJREqURVzupA7PsQTcA=="
   }
 }

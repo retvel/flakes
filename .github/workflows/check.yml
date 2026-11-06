@@ -99,10 +99,17 @@ jobs:
           SHA: ${{ github.sha }}
         # The branch is deleted through the API: gh pr merge --delete-branch
         # also looks for a local checkout, which this job has none of.
+        # pull_request runs still waiting for approval at this commit are
+        # deleted first (lib/update-all.sh deletes those it sees): merging
+        # would fail them as expired, and GitHub would mail the failure.
         run: |
           if [ "$(gh pr view "$BRANCH" --json state -q .state)" != OPEN ]; then
             echo "$BRANCH: no open pull request"; exit 0
           fi
+          for id in $(gh api "repos/$GH_REPO/actions/runs?event=pull_request&head_sha=$SHA&status=action_required" -q '.workflow_runs[].id' || true); do
+            gh api -X DELETE "repos/$GH_REPO/actions/runs/$id" ||
+              echo "::warning::could not delete run $id, which waits for approval"
+          done
           gh pr merge "$BRANCH" --merge --match-head-commit "$SHA"
           gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$BRANCH" >/dev/null
           gh workflow run check.yml --ref main

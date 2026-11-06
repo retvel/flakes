@@ -96,11 +96,13 @@ What differs:
   `hermesGatewayUnit` (below) for the Tier 1 unit.
 - The browser tool runs a full Chromium. Unless `browser.executable_path`
   names one, Hermes downloads its own pinned Chromium build (about 170 MB)
-  on first use, a generic Linux binary rather than one from Nix. To use
-  Nix's instead, which Hermes then never downloads over:
+  on first use, a generic Linux binary rather than one from Nix. Point it at
+  a browser from Nix instead, which Hermes then never downloads over. Any
+  Chromium-based one works, such as this flake's Helium:
 
   ```nix
-  services.hermes-agent.settings.browser.executable_path = lib.getExe pkgs.chromium;
+  services.hermes-agent.settings.browser.executable_path =
+    lib.getExe inputs.xr3t.packages.${pkgs.stdenv.hostPlatform.system}.helium;
   ```
 - Each switch merges `settings` (and `terminal.cwd` from `workingDirectory`)
   into `config.yaml`; other keys you set with the CLI stay. `.env` is only

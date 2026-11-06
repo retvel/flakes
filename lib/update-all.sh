@@ -40,13 +40,14 @@ paths() { if [ "$1" = nixpkgs ]; then echo flake.lock; else echo "pkgs/$1"; fi; 
 # merges it once they all pass: this token's pushes start no workflow
 # themselves.
 propose() {
-  local name=$1 title=$2 branch="update/$1" commit
+  local name=$1 title=$2 branch="update/$1" commit commit_sha
   git add -A -- "$(paths "$name")"
   git commit -qm "$title"
   commit="$(git rev-parse HEAD)"
   git reset -q --hard HEAD~1
   git switch -q --detach origin/main
   git cherry-pick "$commit" >/dev/null
+  commit_sha="$(git rev-parse HEAD)"
   git push -qf origin "HEAD:refs/heads/$branch"
   git switch -q main
   if [ "$(gh pr view "$branch" --json state -q .state 2>/dev/null)" = OPEN ]; then
@@ -58,6 +59,27 @@ propose() {
   fi
   gh workflow run check.yml --ref "$branch" ||
     { echo "::error::$name: could not start check.yml on $branch"; failed=1; }
+  drop_approval_runs "$branch" "$commit_sha"
+}
+
+# Deletes the pull_request runs of check.yml that this token's push or pull
+# request left waiting for approval at <sha>: GitHub starts those only when
+# someone approves them, and fails them once the pull request merges, which
+# mails a failure for every proposed update. The dispatched run above checks
+# and merges instead. They can take a moment to appear; a failure here is
+# only a warning.
+drop_approval_runs() {
+  local branch=$1 sha=$2 ids="" _
+  for _ in 1 2 3 4 5 6; do
+    ids="$(gh api "repos/{owner}/{repo}/actions/runs?event=pull_request&head_sha=$sha&status=action_required" \
+      -q '.workflow_runs[].id' 2>/dev/null)" || ids=""
+    [ -z "$ids" ] || break
+    sleep 10
+  done
+  for id in $ids; do
+    gh api -X DELETE "repos/{owner}/{repo}/actions/runs/$id" >/dev/null ||
+      echo "::warning::$branch: could not delete run $id, which waits for approval"
+  done
 }
 
 # Whether update/<name> already holds exactly this update.

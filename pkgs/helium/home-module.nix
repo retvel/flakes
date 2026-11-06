@@ -11,7 +11,9 @@ self:
 # Preferences (helium.services.browser_updates, the updates toggle on the
 # Helium services page of its privacy settings), and checks for updates while
 # any profile has it on. This only adds `false` to profiles that don't have
-# the key yet, so whatever the user sets afterwards stays.
+# the key yet, so whatever the user sets afterwards stays. Only on macOS:
+# Helium's Linux build has no update check (upstream builds it for macOS and
+# Windows only), so on Linux the module just installs it.
 let
   cfg = config.programs.helium;
   # Upstream's user data directory on macOS.
@@ -74,8 +76,9 @@ in
       type = lib.types.bool;
       default = false;
       description = ''
-        Let Helium check updates.helium.computer for a newer release. It can't
-        install one into the Nix store. false, the default, sets
+        Let Helium check updates.helium.computer for a newer release (macOS;
+        the Linux build has no update check). It can't install one into the
+        Nix store. false, the default, sets
         `helium.services.browser_updates` to false in each profile that
         doesn't have it yet, as updates come through Nix; once it's there,
         Helium's own toggle decides. Profiles are only changed while Helium
@@ -88,14 +91,16 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    home.activation.heliumBrowserUpdates = lib.mkIf (!cfg.checkUpdates) (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        if /usr/bin/pgrep -xq Helium; then
-          echo "helium: running; its update check is set off at the next activation while it is closed"
-        else
-          run ${lib.getExe pkgs.python3} -I ${addDefault} ${lib.escapeShellArg dir}
-        fi
-      ''
-    );
+    home.activation.heliumBrowserUpdates =
+      lib.mkIf (pkgs.stdenv.hostPlatform.isDarwin && !cfg.checkUpdates)
+        (
+          lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            if /usr/bin/pgrep -xq Helium; then
+              echo "helium: running; its update check is set off at the next activation while it is closed"
+            else
+              run ${lib.getExe pkgs.python3} -I ${addDefault} ${lib.escapeShellArg dir}
+            fi
+          ''
+        );
   };
 }

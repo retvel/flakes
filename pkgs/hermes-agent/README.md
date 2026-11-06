@@ -94,11 +94,16 @@ What differs:
 - With `gateway.enable` the unit is `hermes-agent`, which Hermes' CLI does
   not know: `hermes gateway status` reports "Running manually". Use
   `hermesGatewayUnit` (below) for the Tier 1 unit.
-- Once Hermes downloads a tool into `~/.hermes/tools` (the browser tool
-  fetches agent-browser on first use when none is on PATH), `hermes gateway
-  status` warns "install out of sync" for node, npm, ripgrep and ffmpeg,
-  which it then expects there too. Put `pkgs.agent-browser` in
-  `home.packages` to avoid it.
+- The browser tool runs a full Chromium. Unless `browser.executable_path`
+  names one, Hermes downloads its own pinned Chromium build (about 170 MB)
+  on first use, a generic Linux binary rather than one from Nix. Point it at
+  a browser from Nix instead, which Hermes then never downloads over. Any
+  Chromium-based one works, such as this flake's Helium:
+
+  ```nix
+  services.hermes-agent.settings.browser.executable_path =
+    lib.getExe inputs.xr3t.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+  ```
 - Each switch merges `settings` (and `terminal.cwd` from `workingDirectory`)
   into `config.yaml`; other keys you set with the CLI stay. `.env` is only
   touched when `environment` or `environmentFiles` is set.

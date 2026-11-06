@@ -9,14 +9,18 @@ cd "$(dirname "$0")"
 
 # The repository makes so many releases that the last cua-driver one can
 # fall outside any page of `gh release list`: take the tags from git instead,
-# newest first, and the first whose release is published (a tag can come
-# before its release, a draft has none to see) and not a prerelease.
+# newest first, and the first with a published release that carries its
+# SHA256SUMS (a tag can come before its release). Upstream marks its stable
+# cua-driver releases as prereleases, so, as its installer does, the tag's
+# x.y.z form is what makes a release stable, not that flag; nightlies are
+# tagged nightly-cua-driver-rs-v*.
 prefix=cua-driver-rs-v
 version=""
 for tag in $(git ls-remote --tags --refs https://github.com/trycua/cua "refs/tags/$prefix*" |
-  sed -n "s|.*refs/tags/\($prefix[0-9][0-9.]*\)\$|\1|p" | sort -rV | head -n 10); do
-  if pre="$(gh release view "$tag" -R trycua/cua --json isPrerelease -q .isPrerelease 2>/dev/null)" &&
-    [ "$pre" = false ]; then
+  sed -n "s|.*refs/tags/\($prefix[0-9]*\.[0-9]*\.[0-9]*\)\$|\1|p" | sort -rV | head -n 10); do
+  if ready="$(gh release view "$tag" -R trycua/cua --json isDraft,assets \
+    -q '(.isDraft | not) and any(.assets[]; .name == "SHA256SUMS")' 2>/dev/null)" &&
+    [ "$ready" = true ]; then
     version="${tag#"$prefix"}"
     break
   fi

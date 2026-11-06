@@ -92,6 +92,9 @@ Short imperative subject lines with no prefix. The update workflow commits as
 This repo is public. Commits and files must not carry private data:
 
 - No links to private sessions or chats (such as an agent's session trailer).
+  This holds for pull request descriptions, comments and reviews too: a tool
+  may append a footer that links the session, so check what was posted and
+  edit the link out.
 - Author and committer emails are noreply addresses only.
 - No hostnames, usernames, IPs, local paths or other details of anyone's
   machines in code, comments, docs or commit messages; use `alice`,
